@@ -1,0 +1,64 @@
+#+ATTR_HTML: align="center"; margin-right="auto"; margin-left="auto"
+[[images/logo.png]]
+
+This repo aims to provide dockerized =lsp-mode= in 3 different modes.
+
+* Usage
+** =Emacs= / Project source in docker container/Language Servers in =docker= container
+   - Emacs running in local
+*** Spacemacs
+    - Build docker image:
+    #+begin_src bash
+      docker build -t lsp-emacs-docker .
+      # Clone spacemacs develop
+      git clone git clone -b develop https://github.com/syl20bnr/spacemacs ~/.emacs.d-docker
+    #+end_src
+    - Run
+      #+begin_src bash
+        docker run -ti --rm -v $('pwd'):/mnt/workspace \
+               -v /etc/localtime:/etc/localtime:ro \
+               -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
+               -v ~/.gnupg:${UHOME}/.gnupg \
+               -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
+               -v /tmp/.X11-unix:/tmp/.X11-unix \
+               -v /etc/machine-id:/etc/machine-id:ro \
+               -v ~/.emacs.d-docker/:/root/.emacs.d \
+               -v $(pwd)/dotspacemacs.el:/root/.spacemacs \
+               -v $(pwd)/demo-projects/:/Projects \
+               -v $(pwd)/local/:/root/.local \
+               -e DISPLAY=$DISPLAY \
+               -e TZ=UA \
+               lsp-emacs-docker emacs
+      #+end_src
+*** Vanilla (tbd)
+** =Emacs= local - Project source and Language Servers in =docker= machine(over =TRAMP=).
+** =Emacs= and source code on the local machine, server running in the =docker= container.
+* lsp-mode docker integration
+** Docker
+   - =Emacs27= compiled with native JSON support for better performance.
+   - Language servers - the following language servers and debug adapters are preconfigured and ready to be used.
+     | Language              | Language Server                           | Debugger             |
+     |-----------------------+-------------------------------------------+----------------------|
+     | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |                      |
+     | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                                      | WIP                  |
+     | C++                   | [[https://clang.llvm.org/extra/clangd.html][clangd]]                                    | WIP                  |
+     | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                                       |                      |
+     | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]]         | N/A                  |
+     | F#                    | [[https://github.com/fsharp/FsAutoComplete][fsautocomplete]]                            | No                   |
+     | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                                     | Yes                  |
+     | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                                      |                      |
+     | Java                  | [[https://github.com/eclipse/eclipse.jdt.ls][Eclipse JDT LS]]                            | Yes                  |
+     | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]  (recommended) | Yes (Firefox/Chrome) |
+     | JavaScript/TypeScript | [[https://github.com/sourcegraph/javascript-typescript-langserver][javascript-typescript-stdio]]               | Yes (Firefox/Chrome) |
+     | JavaScript Flow       | [[https://flow.org][flow]] (add-on if working on a Flow file)   | Yes (Firefox/Chrome) |
+     | PHP(recommended)      | [[https://github.com/bmewburn/vscode-intelephense][intelephense]]                              | Yes                  |
+     | Python                | [[https://github.com/palantir/python-language-server][pyls]]                                      | Yes                  |
+     | Python(Microsoft)     | [[https://github.com/Microsoft/python-language-server][Microsoft Python Language Server]]          | Yes                  |
+     | Ruby                  | [[https://github.com/castwide/solargraph][solargraph]]                                | Yes                  |
+     | Rust                  | [[https://github.com/rust-lang-nursery/rls][rls]]                                       | Yes                  |
+     | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |                      |
+     | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       | Yes (Firefox/Chrome) |
+     | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |                      |
+   - Spacemacs configuration(.spacemacs) with enabled language servers.
+   - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
+   - Preconfigured =LSP Mode clients= which can be used to run language server installed on docker over source code on the local machine(Linux/Mac? only)
