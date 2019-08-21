@@ -114,6 +114,8 @@ RUN apt-get install -y libjansson-dev
 RUN git clone --depth=1 git://git.sv.gnu.org/emacs.git /emacs
 RUN cd /emacs && ./autogen.sh && ./configure --with-modules --with-json && make -j4 && make install
 
+ENV PATH="/kotlin-language-server/server/build/install/server/bin/:${PATH}"
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
 
 # RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
 # RUN echo "deb https://download.mono-project.com/repo/ubuntu bionic/snapshots/5.20 main" | tee /etc/apt/sources.list.d/mono-official-stable.list

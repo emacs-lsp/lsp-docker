@@ -36,11 +36,12 @@ This function should only modify configuration layer settings."
    '(emacs-lisp
      vinegar
      helm
+     (git)
      (lsp :variables
           lsp-ui-sideline-show-hover nil
           lsp-ui-doc-enable nil
           lsp-ui-sideline-update-mode 'point)
-     dap
+     (dap :variables dap-enable-mouse-support nil)
      auto-completion
      syntax-checking
      (treemacs :variables treemacs-space-between-root-nodes nil)
@@ -60,7 +61,7 @@ This function should only modify configuration layer settings."
    ;; To use a local version of a package, use the `:location' property:
    ;; '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '(scala-mode php-mode company-posframe)
+   dotspacemacs-additional-packages '(scala-mode php-mode company-posframe kotlin-mode)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -472,15 +473,21 @@ before packages are loaded."
 
   (add-hook 'prog-mode-hook #'evil-cleverparens-mode)
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode-enable)
+
   (with-eval-after-load 'evil-cleverparens
     (require 'evil-cleverparens-text-objects))
-
 
   (spacemacs|define-jump-handlers scala-mode)
   (add-hook 'scala-mode-hook 'lsp)
 
   (spacemacs|define-jump-handlers sbt-mode)
   (add-hook 'sbt-mode-hook 'lsp)
+
+  (spacemacs|define-jump-handlers kotlin-mode)
+  (add-hook 'kotlin-mode-hook 'lsp)
+  (add-to-list 'exec-path "/kotlin-language-server/server/build/install/server/bin/")
+  (setq lsp-kotlin-compiler-jvm-target "1.8")
+
 
   (setq lsp-xml-server-command '("java" "-jar" "/root/org.eclipse.lsp4xml.jar")
         lsp-xml-jar-file "/root/org.eclipse.lsp4xml.jar")
@@ -498,7 +505,8 @@ before packages are loaded."
     (sp-use-paredit-bindings)
     (sp-pair "(" ")" :wrap "M-(")
     (sp-pair "{" "}" :wrap "M-{")
-    (sp-pair "/*" "*/" :actions '(insert))
+    (sp-pair "/* " "*/" :actions '(insert))
+    (sp-pair "/** " "*/" :actions '(insert))
     (sp-pair "[" "]" :wrap "M-["))
 
   (with-eval-after-load 'cc-mode
@@ -514,8 +522,9 @@ before packages are loaded."
   (setq company-minimum-prefix-length 0
         company-idle-delay 0.0)
 
-  (configuration-layer/lazy-install 'lsp :extensions '("\\(\\.amk\\'\\|/Amkfile\\'\\|\\.phtml\\'\\|\\.php[s345t]?\\'\\|[^/]\\.\\(module\\|test\\|install\\|profile\\|tpl\\.php\\|theme\\|inc\\)\\'\\|\\.php\\'\\)" php-mode))
   (define-key lsp-mode-map (kbd "TAB") 'company-indent-or-complete-common)
 
   (with-eval-after-load 'company
-    (company-posframe-mode)))
+    (company-posframe-mode))
+
+  (configuration-layer/lazy-install 'lsp :extensions '("\\(\\.amk\\'\\|/Amkfile\\'\\|\\.phtml\\'\\|\\.php[s345t]?\\'\\|[^/]\\.\\(module\\|test\\|install\\|profile\\|tpl\\.php\\|theme\\|inc\\)\\'\\|\\.php\\'\\)" php-mode)))

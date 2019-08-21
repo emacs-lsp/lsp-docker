@@ -15,6 +15,7 @@ elpa
 workspace
 eclipse.jdt.ls
 target
+bin
 node_modules
 .emacs.d
 emacs.d
