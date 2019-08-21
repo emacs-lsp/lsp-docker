@@ -1,7 +1,6 @@
-#include <iostream>
+ // 
 
-using namespace std;
+struct something_else {
+  something_else() {}
+};
 
-int main(int argc, char *argv[]) {
-  cout << "Hello world!";
-}
