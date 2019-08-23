@@ -75,7 +75,7 @@
 
 (cl-defun lsp-docker-init-default-clients (&key
                                            path-mappings
-                                           (docker-image-id "lsp-emacs-docker")
+                                           (docker-image-id "yyoncho/lsp-emacs-docker")
                                            (docker-container-name "lsp-container")
                                            (pririty 1))
   (lsp-docker-register-client

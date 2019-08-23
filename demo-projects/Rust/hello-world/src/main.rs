@@ -1,5 +1,5 @@
 
 fn main() {
-    let s = 100;
-    println!("Hello, world!");
+    let mut s = 100;
+    s = 10;
 }

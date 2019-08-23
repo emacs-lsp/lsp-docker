@@ -11,4 +11,4 @@ docker run -ti --rm -v $('pwd'):/mnt/workspace \
        -v ~/.m2/:/root/.m2 \
        -e DISPLAY=$DISPLAY \
        -e TZ=UA \
-       lsp-emacs-docker emacs
+       yyoncho/lsp-emacs-docker emacs $*
