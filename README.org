@@ -1,71 +1,20 @@
 #+ATTR_HTML: align="center"; margin-right="auto"; margin-left="auto"
 This repo aims to provide dockerized =lsp-mode= in 3 different modes.
 * Table of Contents                                       :TOC_4_gh:noexport:
+- [[#preconfigured-language-servers][Preconfigured language servers]]
   - [[#usage][Usage]]
     - [[#docker-standalone][docker standalone]]
       - [[#spacemacs][Spacemacs]]
       - [[#vanilla][Vanilla]]
   - [[#docker-over-tramp-tbd][docker over TRAMP (TBD)]]
-  - [[#docker-language-server-running-over-local-sources][docker Language Server running over local sources.]]
-- [[#docker-image][docker image]]
+  - [[#docker-language-server-running-over-local-sources-tbd][docker Language Server running over local sources (TBD)]]
 
-** Usage
-   There are 3 supported modes:
-*** docker standalone
-    Run emacs and language servers in the docker container.
-**** Spacemacs
-     - Build docker image:
-     #+begin_src bash
-       docker build -t yyoncho/lsp-emacs-docker .
-       # Clone spacemacs develop
-       git clone git clone -b develop https://github.com/syl20bnr/spacemacs ~/.emacs.d-docker
-     #+end_src
-     - Run
-       #+begin_src bash
-         docker run -ti --rm -v $('pwd'):/mnt/workspace \
-                -v /etc/localtime:/etc/localtime:ro \
-                -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
-                -v ~/.gnupg:${UHOME}/.gnupg \
-                -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-                -v /tmp/.X11-unix:/tmp/.X11-unix \
-                -v /etc/machine-id:/etc/machine-id:ro \
-                -v ~/.emacs.d-docker/:/root/.emacs.d \
-                -v $(pwd)/dotspacemacs.el:/root/.spacemacs \
-                -v $(pwd)/demo-projects/:/Projects \
-                -v $(pwd)/local/:/root/.local \
-                -e DISPLAY=$DISPLAY \
-                -e TZ=UA \
-                yyoncho/lsp-emacs-docker emacs
-       #+end_src
-**** Vanilla
-***** Setup
-***** Config
-      #+begin_src bash
-        docker run -ti --rm -v $('pwd'):/mnt/workspace \
-               -v /etc/localtime:/etc/localtime:ro \
-               -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
-               -v ~/.gnupg:${UHOME}/.gnupg \
-               -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-               -v /tmp/.X11-unix:/tmp/.X11-unix \
-               -v /etc/machine-id:/etc/machine-id:ro \
-               -v $(pwd)/demo-projects/:/Projects \
-               -v $(pwd)/emacs.d/:/root/.emacs.d \
-               -v $(pwd)/local/share/fonts:/root/.local/share/fonts/ \
-               -e DISPLAY=$DISPLAY \
-               -e TZ=UA \
-               yyoncho/lsp-emacs-docker emacs
-      #+end_src
-** docker over TRAMP (TBD)
-   Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
-** docker Language Server running over local sources.
-   In this mode the language servers run over the local
-* docker image
+* Preconfigured language servers
   The docker has the following content:
   - =Emacs27= compiled with native JSON support for better performance.
   - Spacemacs configuration(.spacemacs) with enabled language servers.
   - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
-  - Preconfigured =LSP Mode clients= which can be used to run language server installed on docker over source code on the local machine(Linux/Mac? only)
-  - Language servers - the following language servers and debug adapters are preconfigured and ready to be used.
+  - Language servers:
     | Language              | Language Server                           |
     |-----------------------+-------------------------------------------|
     | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |
@@ -89,3 +38,51 @@ This repo aims to provide dockerized =lsp-mode= in 3 different modes.
     | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |
     | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       |
     | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |
+** Usage
+   There are 3 supported modes:
+*** docker standalone
+    Run emacs and language servers in the docker container.
+**** Spacemacs
+     - Build docker image:
+     #+begin_src bash
+       # Clone spacemacs develop
+       git clone git clone -b develop https://github.com/syl20bnr/spacemacs ~/.emacs.d-docker
+     #+end_src
+     - Run
+       #+begin_src bash
+         docker run -ti --rm -v $('pwd'):/mnt/workspace \
+                -v /etc/localtime:/etc/localtime:ro \
+                -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
+                -v ~/.gnupg:${UHOME}/.gnupg \
+                -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
+                -v /tmp/.X11-unix:/tmp/.X11-unix \
+                -v /etc/machine-id:/etc/machine-id:ro \
+                -v ~/.emacs.d-docker/:/root/.emacs.d \
+                -v $(pwd)/dotspacemacs.el:/root/.spacemacs \
+                -v $(pwd)/demo-projects/:/Projects \
+                -v $(pwd)/local/:/root/.local \
+                -e DISPLAY=$DISPLAY \
+                -e TZ=UA \
+                yyoncho/lsp-emacs-docker emacs
+       #+end_src
+**** Vanilla
+***** Run
+      #+begin_src bash
+        docker run -ti --rm -v $('pwd'):/mnt/workspace \
+               -v /etc/localtime:/etc/localtime:ro \
+               -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
+               -v ~/.gnupg:${UHOME}/.gnupg \
+               -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
+               -v /tmp/.X11-unix:/tmp/.X11-unix \
+               -v /etc/machine-id:/etc/machine-id:ro \
+               -v $(pwd)/demo-projects/:/Projects \
+               -v $(pwd)/emacs.d/:/root/.emacs.d \
+               -v $(pwd)/local/share/fonts:/root/.local/share/fonts/ \
+               -e DISPLAY=$DISPLAY \
+               -e TZ=UA \
+               yyoncho/lsp-emacs-docker emacs
+      #+end_src
+** docker over TRAMP (TBD)
+   Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
+** docker Language Server running over local sources (TBD)
+   In this mode the language servers run over the local
