@@ -66,26 +66,26 @@ This repo aims to provide dockerized =lsp-mode= in 3 different modes.
   - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
   - Preconfigured =LSP Mode clients= which can be used to run language server installed on docker over source code on the local machine(Linux/Mac? only)
   - Language servers - the following language servers and debug adapters are preconfigured and ready to be used.
-    | Language              | Language Server                           | Debugger                     |
-    |-----------------------+-------------------------------------------+------------------------------|
-    | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |                              |
-    | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                                      | WIP                          |
-    | C++                   | [[https://clang.llvm.org/extra/clangd.html][clangd]]                                    | WIP                          |
-    | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                                       |                              |
-    | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]]         | N/A                          |
-    | F#                    | [[https://github.com/fsharp/FsAutoComplete][fsautocomplete]]                            | No                           |
-    | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                                     | Yes                          |
-    | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                                      |                              |
-    | Java                  | [[https://github.com/eclipse/eclipse.jdt.ls][Eclipse JDT LS]]                            | Yes                          |
-    | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]  (recommended) | Yes (Firefox/Chrome)         |
-    | JavaScript/TypeScript | [[https://github.com/sourcegraph/javascript-typescript-langserver][javascript-typescript-stdio]]               | Yes (Firefox/Chrome)         |
-    | JavaScript Flow       | [[https://flow.org][flow]] (add-on if working on a Flow file)   | Yes (Firefox/Chrome)         |
-    | Kotlin                | [[https://github.com/fwcd/KotlinLanguageServer][kotlin-language-server]]                    | Not integrated with dap-mode |
-    | PHP(recommended)      | [[https://github.com/bmewburn/vscode-intelephense][intelephense]]                              | Yes                          |
-    | Python                | [[https://github.com/palantir/python-language-server][pyls]]                                      | Yes                          |
-    | Python(Microsoft)     | [[https://github.com/Microsoft/python-language-server][Microsoft Python Language Server]]          | Yes                          |
-    | Ruby                  | [[https://github.com/castwide/solargraph][solargraph]]                                | Yes                          |
-    | Rust                  | [[https://github.com/rust-lang-nursery/rls][rls]]                                       | Yes                          |
-    | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |                              |
-    | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       | Yes (Firefox/Chrome)         |
-    | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |                              |
+    | Language              | Language Server                           |
+    |-----------------------+-------------------------------------------|
+    | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |
+    | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                                      |
+    | C++                   | [[https://clang.llvm.org/extra/clangd.html][clangd]]                                    |
+    | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                                       |
+    | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]]         |
+    | F#                    | [[https://github.com/fsharp/FsAutoComplete][fsautocomplete]]                            |
+    | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                                     |
+    | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                                      |
+    | Java                  | [[https://github.com/eclipse/eclipse.jdt.ls][Eclipse JDT LS]]                            |
+    | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]  (recommended) |
+    | JavaScript/TypeScript | [[https://github.com/sourcegraph/javascript-typescript-langserver][javascript-typescript-stdio]]               |
+    | JavaScript Flow       | [[https://flow.org][flow]] (add-on if working on a Flow file)   |
+    | Kotlin                | [[https://github.com/fwcd/KotlinLanguageServer][kotlin-language-server]]                    |
+    | PHP(recommended)      | [[https://github.com/bmewburn/vscode-intelephense][intelephense]]                              |
+    | Python                | [[https://github.com/palantir/python-language-server][pyls]]                                      |
+    | Python(Microsoft)     | [[https://github.com/Microsoft/python-language-server][Microsoft Python Language Server]]          |
+    | Ruby                  | [[https://github.com/castwide/solargraph][solargraph]]                                |
+    | Rust                  | [[https://github.com/rust-lang-nursery/rls][rls]]                                       |
+    | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |
+    | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       |
+    | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |
