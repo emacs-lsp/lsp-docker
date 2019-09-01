@@ -117,6 +117,17 @@ RUN cd /emacs && ./autogen.sh && ./configure --with-modules --with-json && make 
 ENV PATH="/kotlin-language-server/server/build/install/server/bin/:/root/.cargo/bin:${PATH}"
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
 
+COPY local /root/.local
+
+RUN wget https://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb && dpkg -i erlang-solutions_1.0_all.deb
+RUN apt-get update && apt-get install -y esl-erlang
+ENV PATH="/rebar3/_build/prod/bin/:${PATH}"
+RUN git clone https://github.com/erlang/rebar3.git && cd /rebar3 && ./bootstrap
+RUN git clone https://github.com/erlang-ls/erlang_ls --depth 1 && cd erlang_ls && rebar3 escriptize
+ENV PATH="/erlang_ls/_build/default/bin/:${PATH}"
+
+# RUN git clone --depth 1 https://github.com/erlang-ls/erlang_ls && cd /erlang_ls && rebar3 escriptize
+
 # RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
 # RUN echo "deb https://download.mono-project.com/repo/ubuntu bionic/snapshots/5.20 main" | tee /etc/apt/sources.list.d/mono-official-stable.list
 # RUN apt-get update

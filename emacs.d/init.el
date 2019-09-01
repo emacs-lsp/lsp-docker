@@ -1,7 +1,7 @@
 (setq package-selected-packages
       '(lsp-mode lsp-ui company-lsp yasnippet lsp-java lsp-python-ms lsp-haskell helm-lsp lsp-treemacs dap-mode lsp-origami helm-lsp
                  rust-mode php-mode typescript-mode kotlin-mode scala-mode
-                 flycheck))
+                 flycheck erlang))
 
                                         ; list the repositories containing them
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
@@ -33,4 +33,8 @@
   (define-key java-mode-map (kbd "(") nil))
 
 (custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(lsp-ui-sideline-code-action ((t (:foreground "orange")))))
