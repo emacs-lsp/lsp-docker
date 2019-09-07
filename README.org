@@ -101,10 +101,10 @@ This repo aims to provide dockerized =lsp-mode= in 3 different modes.
       (add-to-load-path "<path-to-lsp-docker-dir>")
       ;; register the clients
       (lsp-docker-init-default-clients
-       :path-mappings '(("path-to-projects-you-want-to-use" . "/projects")
+       :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
        :docker-image-id "yyoncho/lsp-emacs-docker"
        :docker-container-name "lsp-container"
-       :priority 2))
+       :priority 2)
 
     #+end_src
 *** How it works
