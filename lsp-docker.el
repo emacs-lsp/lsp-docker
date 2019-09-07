@@ -77,10 +77,10 @@
                                            path-mappings
                                            (docker-image-id "yyoncho/lsp-emacs-docker")
                                            (docker-container-name "lsp-container")
-                                           (pririty 10))
+                                           (priority 10))
   (lsp-docker-register-client
    :server-id 'rls
-   :priority pririty
+   :priority priority
    :docker-server-id 'rls-docker
    :docker-image-id docker-image-id
    :docker-container-name docker-container-name
@@ -89,7 +89,7 @@
 
   (lsp-docker-register-client
    :server-id 'pyls
-   :priority pririty
+   :priority priority
    :docker-server-id 'pyls-docker
    :docker-image-id docker-image-id
    :docker-container-name docker-container-name
