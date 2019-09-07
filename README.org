@@ -1,43 +1,46 @@
 #+ATTR_HTML: align="center"; margin-right="auto"; margin-left="auto"
 This repo aims to provide dockerized =lsp-mode= in 3 different modes.
 * Table of Contents                                       :TOC_4_gh:noexport:
-- [[#preconfigured-language-servers][Preconfigured language servers]]
+  - [[#preconfigured-language-servers][Preconfigured language servers]]
   - [[#usage][Usage]]
     - [[#docker-standalone][docker standalone]]
       - [[#spacemacs][Spacemacs]]
       - [[#vanilla][Vanilla]]
+  - [[#docker-language-server-running-over-local-sources-only-linuxmacos][docker Language Server running over local sources (only Linux/MacOS)]]
+    - [[#configuration][Configuration]]
+    - [[#how-it-works][How it works]]
   - [[#docker-over-tramp-tbd][docker over TRAMP (TBD)]]
-  - [[#docker-language-server-running-over-local-sources-tbd][docker Language Server running over local sources (TBD)]]
+  - [[#see-also][See also]]
 
-* Preconfigured language servers
-  The docker has the following content:
-  - =Emacs27= compiled with native JSON support for better performance.
-  - Spacemacs configuration(.spacemacs) with enabled language servers.
-  - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
-  - Language servers:
-    | Language              | Language Server                           |
-    |-----------------------+-------------------------------------------|
-    | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |
-    | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                                      |
-    | C++                   | [[https://clang.llvm.org/extra/clangd.html][clangd]]                                    |
-    | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                                       |
-    | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]]         |
-    | F#                    | [[https://github.com/fsharp/FsAutoComplete][fsautocomplete]]                            |
-    | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                                     |
-    | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                                      |
-    | Java                  | [[https://github.com/eclipse/eclipse.jdt.ls][Eclipse JDT LS]]                            |
-    | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]  (recommended) |
-    | JavaScript/TypeScript | [[https://github.com/sourcegraph/javascript-typescript-langserver][javascript-typescript-stdio]]               |
-    | JavaScript Flow       | [[https://flow.org][flow]] (add-on if working on a Flow file)   |
-    | Kotlin                | [[https://github.com/fwcd/KotlinLanguageServer][kotlin-language-server]]                    |
-    | PHP(recommended)      | [[https://github.com/bmewburn/vscode-intelephense][intelephense]]                              |
-    | Python                | [[https://github.com/palantir/python-language-server][pyls]]                                      |
-    | Python(Microsoft)     | [[https://github.com/Microsoft/python-language-server][Microsoft Python Language Server]]          |
-    | Ruby                  | [[https://github.com/castwide/solargraph][solargraph]]                                |
-    | Rust                  | [[https://github.com/rust-lang-nursery/rls][rls]]                                       |
-    | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |
-    | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       |
-    | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |
+** Preconfigured language servers
+   The docker has the following content:
+   - =Emacs27= compiled with native JSON support for better performance.
+   - Spacemacs configuration(.spacemacs) with enabled language servers.
+   - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
+   - Language servers:
+     | Language              | Language Server                           |
+     |-----------------------+-------------------------------------------|
+     | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |
+     | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                                      |
+     | C++                   | [[https://clang.llvm.org/extra/clangd.html][clangd]]                                    |
+     | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                                       |
+     | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]]         |
+     | F#                    | [[https://github.com/fsharp/FsAutoComplete][fsautocomplete]]                            |
+     | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                                     |
+     | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                                      |
+     | Java                  | [[https://github.com/eclipse/eclipse.jdt.ls][Eclipse JDT LS]]                            |
+     | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]  (recommended) |
+     | JavaScript/TypeScript | [[https://github.com/sourcegraph/javascript-typescript-langserver][javascript-typescript-stdio]]               |
+     | JavaScript Flow       | [[https://flow.org][flow]] (add-on if working on a Flow file)   |
+     | Kotlin                | [[https://github.com/fwcd/KotlinLanguageServer][kotlin-language-server]]                    |
+     | PHP(recommended)      | [[https://github.com/bmewburn/vscode-intelephense][intelephense]]                              |
+     | Python                | [[https://github.com/palantir/python-language-server][pyls]]                                      |
+     | Python(Microsoft)     | [[https://github.com/Microsoft/python-language-server][Microsoft Python Language Server]]          |
+     | Ruby                  | [[https://github.com/castwide/solargraph][solargraph]]                                |
+     | Rust                  | [[https://github.com/rust-lang-nursery/rls][rls]]                                       |
+     | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |
+     | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       |
+     | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |
 ** Usage
    There are 3 supported modes:
 *** docker standalone
@@ -86,7 +89,27 @@ This repo aims to provide dockerized =lsp-mode= in 3 different modes.
                -e TZ=UA \
                yyoncho/lsp-emacs-docker emacs
       #+end_src
+** docker Language Server running over local sources (only Linux/MacOS)
+   In this mode, =lsp-mode= runs the =Language Server= in =docker= container over local sources.
+*** Configuration
+    - Clone repo.
+    #+begin_src bash
+      git clone https://github.com/emacs-lsp/lsp-docker
+    #+end_src
+    - add it to load path and register the docker clients(currently =pyls= and =rls= are supported, but adding other clients is trivial).
+    #+begin_src elisp
+      (add-to-load-path "<path-to-lsp-docker-dir>")
+      ;; register the clients
+      (lsp-docker-init-default-clients
+       :path-mappings '(("path-to-projects-you-want-to-use" . "/projects")
+       :docker-image-id "yyoncho/lsp-emacs-docker"
+       :docker-container-name "lsp-container"
+       :priority 2))
+
+    #+end_src
+*** How it works
+    =lsp-mode= starts the image passed as =:docker-image-id= and mounts =:path-mappings= in the container. Then when the process is started =lsp-mode= translates the local paths to =docker= path and vice versa using the =:path-mappings= specified when calling =lsp-docker-init-default-clients=. You may use =lsp-enabled-clients= and =lsp-disabled-clients= to control what language server will be used to run for a particular project(refer to =lsp-mode= FAQ on how to configure .dir-locals).
 ** docker over TRAMP (TBD)
    Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
-** docker Language Server running over local sources (TBD)
-   In this mode the language servers run over the local
+** See also
+   - [[https://github.com/Silex/docker.el][docker]] - package for managing =docker= images/containers.

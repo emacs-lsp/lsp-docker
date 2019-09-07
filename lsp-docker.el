@@ -40,7 +40,7 @@
                                         (s-contains? local-path path))
                                       path-mappings))
        (s-replace local remote path)
-     (user-error path))))
+     (user-error "The path %s is not under path mappings" path))))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
@@ -52,7 +52,6 @@
 
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
-        (when priority (setf (lsp--client-priority client) priority))
         (setf (lsp--client-server-id client) docker-server-id
               (lsp--client-uri->path-fn client) (-partial #'lsp--docker-uri->path
                                                           path-mappings
@@ -69,7 +68,8 @@
                                                                            (s-join " "))
                                                                       docker-image-id
                                                                       server-command))
-                                                      " "))))
+                                                      " ")))
+              (lsp--client-priority client) (or priority (lsp--client-priority client)))
         (lsp-register-client client))
     (user-error "No such client %s" server-id)))
 
@@ -77,25 +77,24 @@
                                            path-mappings
                                            (docker-image-id "yyoncho/lsp-emacs-docker")
                                            (docker-container-name "lsp-container")
-                                           (pririty 1))
+                                           (pririty 10))
   (lsp-docker-register-client
    :server-id 'rls
    :priority pririty
    :docker-server-id 'rls-docker
    :docker-image-id docker-image-id
    :docker-container-name docker-container-name
-   :server-command "/root/.cargo/bin/rls"
+   :server-command "rls"
    :path-mappings path-mappings)
 
   (lsp-docker-register-client
-   :server-id 'rls
+   :server-id 'pyls
    :priority pririty
-   :docker-server-id 'rls-docker
+   :docker-server-id 'pyls-docker
    :docker-image-id docker-image-id
    :docker-container-name docker-container-name
-   :server-command "/root/.cargo/bin/rls"
-   :path-mappings path-mappings)
-  )
+   :server-command "pyls"
+   :path-mappings path-mappings))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
