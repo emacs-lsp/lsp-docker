@@ -128,11 +128,16 @@ ENV PATH="/erlang_ls/_build/default/bin/:${PATH}"
 
 # RUN git clone --depth 1 https://github.com/erlang-ls/erlang_ls && cd /erlang_ls && rebar3 escriptize
 
-# RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-# RUN echo "deb https://download.mono-project.com/repo/ubuntu bionic/snapshots/5.20 main" | tee /etc/apt/sources.list.d/mono-official-stable.list
-# RUN apt-get update
-# RUN apt-get -y install mono-devel
-# RUN mono --version
-# RUN git clone -b feature/lsp-0.13 https://github.com/OmniSharp/omnisharp-roslyn /omnisharp-roslyn
+RUN apt install gnupg ca-certificates
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+RUN echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | tee /etc/apt/sources.list.d/mono-official-stable.list
+RUN apt update
+RUN apt install -y mono-complete
+
+RUN wget -O /tmp/omnisharp.zip https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.34.3/omnisharp-linux-x64.zip
+RUN unzip -d /root/.omnisharp /tmp/omnisharp.zip
+
+# RU N mono --version
+# RU N git clone -b feature/lsp-0.13 https://github.com/OmniSharp/omnisharp-roslyn /omnisharp-roslyn
 # RUN cd /omnisharp-roslyn && ./build.sh
 # RUN
