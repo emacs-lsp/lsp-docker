@@ -126,8 +126,7 @@ RUN git clone https://github.com/erlang/rebar3.git && cd /rebar3 && ./bootstrap
 RUN git clone https://github.com/erlang-ls/erlang_ls --depth 1 && cd erlang_ls && rebar3 escriptize
 ENV PATH="/erlang_ls/_build/default/bin/:${PATH}"
 
-# RUN git clone --depth 1 https://github.com/erlang-ls/erlang_ls && cd /erlang_ls && rebar3 escriptize
-
+# csharp
 RUN apt install gnupg ca-certificates
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
 RUN echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | tee /etc/apt/sources.list.d/mono-official-stable.list
@@ -137,7 +136,35 @@ RUN apt install -y mono-complete
 RUN wget -O /tmp/omnisharp.zip https://github.com/OmniSharp/omnisharp-roslyn/releases/download/v1.34.3/omnisharp-linux-x64.zip
 RUN unzip -d /root/.omnisharp /tmp/omnisharp.zip
 
-# RU N mono --version
-# RU N git clone -b feature/lsp-0.13 https://github.com/OmniSharp/omnisharp-roslyn /omnisharp-roslyn
-# RUN cd /omnisharp-roslyn && ./build.sh
-# RUN
+# haxe
+RUN add-apt-repository ppa:haxe/releases -y
+RUN apt-get update
+RUN apt-get install haxe -y
+RUN mkdir ~/haxelib && haxelib setup ~/haxelib
+
+# Update node
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt update
+RUN apt install nodejs -y
+
+# NPX
+RUN npm install -g npx
+
+RUN useradd -ms /bin/bash lsp
+USER lsp
+WORKDIR /home/lsp
+
+RUN mkdir ~/haxelib && haxelib setup ~/haxelib
+
+# haxe language server
+RUN git clone https://github.com/vshaxe/haxe-language-server
+WORKDIR haxe-language-server
+RUN npm install
+RUN npx lix run vshaxe-build -t language-server
+
+USER root
+WORKDIR /
+RUN mv /home/lsp/haxe-language-server ~/.haxe-language-server
+
+# fasd
+run git clone https://github.com/clvv/fasd && cd fasd && make install
