@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y wget software-properties-common
+RUN apt-get update && apt-get install -y wget software-properties-common curl
 RUN apt-get install gnupg -y
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
@@ -10,31 +10,33 @@ RUN echo deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main >> /etc/ap
 RUN echo deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main
 RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
 RUN apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
-
+RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
 
 RUN apt-get update
-RUN apt-get install -y nodejs npm
+RUN apt-get install -y nodejs
 
 ENV TZ=Europe/Minsk
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get install -y g++ build-essential cmake git \
- libncurses-dev  zlib1g-dev libevent-dev wget python-pip libmsgpack-dev \
- libjsoncpp-dev libmysqlcppconn-dev libgtest-dev cmake libgoogle-perftools-dev \
- libssl-dev libmysqlclient-dev libcrypto++-dev libc6-dev libc6-dev-i386 autoconf \
- texinfo libjpeg-dev libtiff-dev libgif-dev libxpm-dev libgtk-3-dev \
- libgnutls28-dev libncurses5-dev libxml2-dev libxt-dev libjansson4 curl nodejs \
- unzip clang-tools-8 default-jdk composer  golang-go ruby-dev rubygems \
- fonts-iosevka sbt maven
+RUN apt-get install -y g++ build-essential cmake git
+RUN apt-get install -y  libncurses-dev  zlib1g-dev libevent-dev wget python-pip libmsgpack-dev
+RUN apt-get install -y libjsoncpp-dev libmysqlcppconn-dev libgtest-dev cmake libgoogle-perftools-dev
+RUN apt-get install -y libssl-dev libmysqlclient-dev libcrypto++-dev libc6-dev libc6-dev-i386 autoconf
+RUN apt-get install -y texinfo libjpeg-dev libtiff-dev libgif-dev libxpm-dev libgtk-3-dev
+RUN apt-get install -y libgnutls28-dev libncurses5-dev libxml2-dev libxt-dev libjansson4 curl
+RUN apt-get install -y unzip clang-tools-8 default-jdk composer  golang-go ruby-dev rubygems
+RUN apt-get install -y fonts-iosevka sbt maven
 
+# RUN apt-get remove clang-tools-8 -y
+# RUN apt-get install clang-tools-8 -y
 # clangd
-RUN update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-8 100
+# RUN update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-8 100
 
 RUN git clone --depth=1 --recursive https://github.com/MaskRay/ccls
 
 # ccls
 RUN cd ccls && wget -c http://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz && tar xf clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz && cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$PWD/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 && cmake --build Release
-RUN ln -s  /ccls/Release/ccls /usr/bin/
+RUN ln -s /ccls/Release/ccls /usr/bin/
 RUN chmod a+x /usr/bin/ccls
 
 # pyls
@@ -43,14 +45,9 @@ RUN pip install python-language-server[all]
 # rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust-install.sh
 RUN sh /tmp/rust-install.sh -y
-RUN export PATH=$PATH:~/.cargo/bin
 RUN ~/.cargo/bin/rustup component add rls rust-analysis rust-src
+RUN sh $HOME/.cargo/env
 
-RUN apt-get -y install npm
-RUN apt-get install -y nodejs
-
-# bash
-RUN npm i -g bash-language-server
 
 # CSS/LessCSS/SASS/SCSS
 RUN npm install -g vscode-css-languageserver-bin
@@ -79,6 +76,11 @@ RUN npm install -g vue-language-server
 
 # fortran
 RUN pip install fortran-language-server
+
+# bash
+# RUN npm config set python /usr/bin/python2
+# RUN npm install --unsafe-perm -g node-inspector
+# RUN npm i -g bash-language-server
 
 # scala
 RUN curl -L -o coursier https://git.io/coursier
@@ -142,11 +144,6 @@ RUN apt-get update
 RUN apt-get install haxe -y
 RUN mkdir ~/haxelib && haxelib setup ~/haxelib
 
-# Update node
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-RUN apt update
-RUN apt install nodejs -y
-
 # NPX
 RUN npm install -g npx
 
@@ -167,4 +164,6 @@ WORKDIR /
 RUN mv /home/lsp/haxe-language-server ~/.haxe-language-server
 
 # fasd
-run git clone https://github.com/clvv/fasd && cd fasd && make install
+RUN git clone https://github.com/clvv/fasd && cd fasd && make install
+
+COPY local /home/lsp/.local

@@ -1,5 +1,5 @@
 #+ATTR_HTML: align="center"; margin-right="auto"; margin-left="auto"
-This repo aims to provide dockerized =lsp-mode= in 3 different modes.
+Docker image + scripts for running =lsp-mode= in =docker= environment.
 * Table of Contents                                       :TOC_4_gh:noexport:
   - [[#preconfigured-language-servers][Preconfigured language servers]]
   - [[#usage][Usage]]
