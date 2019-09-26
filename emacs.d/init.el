@@ -1,7 +1,7 @@
 (setq package-selected-packages
       '(lsp-mode lsp-ui company-lsp yasnippet lsp-java lsp-python-ms lsp-haskell helm-lsp lsp-treemacs dap-mode lsp-origami helm-lsp
                  rust-mode php-mode typescript-mode kotlin-mode scala-mode
-                 flycheck erlang))
+                 flycheck erlang csharp-mode))
 
                                         ; list the repositories containing them
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
