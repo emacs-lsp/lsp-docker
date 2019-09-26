@@ -1,0 +1,38 @@
+baseurl = "/"
+languageCode = "en-us"
+title = "workspacer"
+theme = "kube"
+publishDir = "../out/docs/"
+
+[params]
+    description = "a tiling window manager for Windows 10"
+    author = "Rick Button"
+
+[[menu.main]]
+    name = "quickstart"
+    url = "/quickstart"
+    weight = 2
+
+[[menu.main]]
+    name = "config"
+    url = "/config"
+    weight = 3
+
+[[menu.main]]
+    name = "keybinds"
+    url = "/keybindings"
+    weight = 4
+
+[[menu.main]]
+    name = "screenshots"
+    url = "/screenshots"
+    weight = 5
+
+[[menu.main]]
+    name = "changelog"
+    url = "/changelog"
+    weight = 6
+
+[[menu.extra]]
+    name = "submit an issue"
+    url = "https://github.com/rickbutton/workspacer/issues/new"

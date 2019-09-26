@@ -1,0 +1,1 @@
+hugo serve --config docs/config.toml -s docs
