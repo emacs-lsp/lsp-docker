@@ -1,7 +1,7 @@
 (setq package-selected-packages
       '(lsp-mode lsp-ui company-lsp yasnippet lsp-java lsp-python-ms lsp-haskell helm-lsp lsp-treemacs dap-mode lsp-origami helm-lsp
                  rust-mode php-mode typescript-mode kotlin-mode scala-mode
-                 flycheck erlang csharp-mode))
+                 flycheck erlang csharp-mode posframe))
 
                                         ; list the repositories containing them
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
@@ -38,3 +38,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(lsp-ui-sideline-code-action ((t (:foreground "orange")))))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(multiple-cursors lsp-mode lsp-ui company-lsp yasnippet lsp-java lsp-python-ms lsp-haskell helm-lsp lsp-treemacs dap-mode lsp-origami helm-lsp rust-mode php-mode typescript-mode kotlin-mode scala-mode flycheck erlang csharp-mode posframe)))
