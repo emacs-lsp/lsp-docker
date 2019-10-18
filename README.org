@@ -59,7 +59,6 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
        #+begin_src bash
          docker run -ti --rm -v $('pwd'):/mnt/workspace \
                 -v /etc/localtime:/etc/localtime:ro \
-                -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
                 -v ~/.gnupg:${UHOME}/.gnupg \
                 -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
                 -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -67,7 +66,6 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
                 -v ~/.emacs.d-docker/:/root/.emacs.d \
                 -v $(pwd)/dotspacemacs.el:/root/.spacemacs \
                 -v $(pwd)/demo-projects/:/Projects \
-                -v $(pwd)/local/:/root/.local \
                 -e DISPLAY=$DISPLAY \
                 -e TZ=UA \
                 yyoncho/lsp-emacs-docker emacs
@@ -77,14 +75,12 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
       #+begin_src bash
         docker run -ti --rm -v $('pwd'):/mnt/workspace \
                -v /etc/localtime:/etc/localtime:ro \
-               -v ~/.ssh/id_rsa:${UHOME}/.ssh/id_rsa:ro \
                -v ~/.gnupg:${UHOME}/.gnupg \
                -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
                -v /tmp/.X11-unix:/tmp/.X11-unix \
                -v /etc/machine-id:/etc/machine-id:ro \
                -v $(pwd)/demo-projects/:/Projects \
                -v $(pwd)/emacs.d/:/root/.emacs.d \
-               -v $(pwd)/local/share/fonts:/root/.local/share/fonts/ \
                -e DISPLAY=$DISPLAY \
                -e TZ=UA \
                yyoncho/lsp-emacs-docker emacs
