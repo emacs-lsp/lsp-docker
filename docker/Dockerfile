@@ -167,3 +167,5 @@ RUN mv /home/lsp/haxe-language-server ~/.haxe-language-server
 RUN git clone https://github.com/clvv/fasd && cd fasd && make install
 
 COPY local /home/lsp/.local
+# RUN apt-get install -y elm
+RUN  npm install -g elm-test elm-format --unsafe-perm=true --allow-root
