@@ -52,14 +52,12 @@
                         (s-join " "))
                    docker-image-id
                    server-command))
-   " ")
-  )
+   " "))
 
 (defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
   (split-string
    (format "docker exec -i %s %s" docker-container-name server-command)
-   )
-  )
+   ))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
