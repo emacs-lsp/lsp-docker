@@ -42,13 +42,31 @@
        (s-replace local remote path)
      (user-error "The path %s is not under path mappings" path))))
 
+(defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
+  (split-string
+   (--doto (format "docker run --name %s --rm -i %s %s %s"
+                   docker-container-name
+                   (->> path-mappings
+                        (-map (-lambda ((path . docker-path))
+                                (format "-v %s:%s" path docker-path)))
+                        (s-join " "))
+                   docker-image-id
+                   server-command))
+   " "))
+
+(defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
+  (split-string
+   (format "docker exec -i %s %s" docker-container-name server-command)
+   ))
+
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
                                            path-mappings
                                            docker-image-id
                                            docker-container-name
                                            priority
-                                           server-command)
+                                           server-command
+                                           launch-server-cmd-fn)
 
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
@@ -59,16 +77,12 @@
               (lsp--client-path->uri-fn client) (-partial #'lsp--docker-path->uri path-mappings)
               (lsp--client-new-connection client) (lsp-stdio-connection
                                                    (lambda ()
-                                                     (split-string
-                                                      (--doto (format "docker run --name %s --rm -i %s %s %s"
-                                                                      docker-container-name
-                                                                      (->> path-mappings
-                                                                           (-map (-lambda ((path . docker-path))
-                                                                                   (format "-v %s:%s" path docker-path)))
-                                                                           (s-join " "))
-                                                                      docker-image-id
-                                                                      server-command))
-                                                      " ")))
+                                                     (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                                              docker-container-name
+                                                              path-mappings
+                                                              docker-image-id
+                                                              server-command)
+                                                     ))
               (lsp--client-priority client) (or priority (lsp--client-priority client)))
         (lsp-register-client client))
     (user-error "No such client %s" server-id)))
@@ -85,7 +99,8 @@
    :docker-image-id docker-image-id
    :docker-container-name docker-container-name
    :server-command "rls"
-   :path-mappings path-mappings)
+   :path-mappings path-mappings
+   :launch-container-server #'lsp-docker-launch-new-container)
 
   (lsp-docker-register-client
    :server-id 'pyls
@@ -94,7 +109,8 @@
    :docker-image-id docker-image-id
    :docker-container-name docker-container-name
    :server-command "pyls"
-   :path-mappings path-mappings))
+   :path-mappings path-mappings
+   :launch-container-server #'lsp-docker-launch-new-container))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
