@@ -77,7 +77,7 @@
               (lsp--client-path->uri-fn client) (-partial #'lsp--docker-path->uri path-mappings)
               (lsp--client-new-connection client) (lsp-stdio-connection
                                                    (lambda ()
-                                                     (funcall launch-server-cmd-fn
+                                                     (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
                                                               docker-container-name
                                                               path-mappings
                                                               docker-image-id
