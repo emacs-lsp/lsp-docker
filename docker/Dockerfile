@@ -30,7 +30,6 @@ RUN apt-get install -y fonts-iosevka sbt maven
 # RUN apt-get remove clang-tools-8 -y
 # RUN apt-get install clang-tools-8 -y
 # clangd
-# RUN update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-8 100
 
 RUN git clone --depth=1 --recursive https://github.com/MaskRay/ccls
 
@@ -167,5 +166,17 @@ RUN mv /home/lsp/haxe-language-server ~/.haxe-language-server
 RUN git clone https://github.com/clvv/fasd && cd fasd && make install
 
 COPY local /home/lsp/.local
-# RUN apt-get install -y elm
+
 RUN  npm install -g elm-test elm-format --unsafe-perm=true --allow-root
+
+# elixir
+RUN git clone https://github.com/elixir-lsp/elixir-ls
+WORKDIR elixir-ls
+RUN apt-get install -y elixir
+RUN mix local.hex --force compile
+RUN mix local.rebar --force
+RUN mix deps.get
+RUN mix elixir_ls.release -o /elixir-release
+ENV PATH="/elixir-release/:${PATH}"
+
+COPY local /root/.local

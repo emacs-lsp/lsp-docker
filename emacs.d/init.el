@@ -2,6 +2,7 @@
       '(lsp-mode lsp-ui company-lsp yasnippet lsp-java lsp-python-ms lsp-haskell helm-lsp lsp-treemacs dap-mode lsp-origami helm-lsp
                  rust-mode php-mode typescript-mode kotlin-mode scala-mode
                  flycheck erlang csharp-mode posframe vue-mode
+                 elixir-mode
                  elm-mode))
 
 ;; list the repositories containing them
