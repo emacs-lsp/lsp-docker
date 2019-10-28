@@ -8,7 +8,6 @@ docker run -ti --rm -v $('pwd'):/mnt/workspace \
        -v ~/.emacs.d-docker/:/root/.emacs.d \
        -v $(pwd)/.spacemacs:/root/.spacemacs \
        -v $(pwd)/demo-projects/:/Projects \
-       -v $(pwd)/local/share/fonts:/root/.local/share/fonts/ \
        -v ~/.m2/:/root/.m2 \
        -e DISPLAY=$DISPLAY \
        -e TZ=UA \
