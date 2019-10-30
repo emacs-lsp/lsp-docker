@@ -1,11 +1,48 @@
 (setq package-selected-packages
-      '(lsp-mode lsp-ui company-lsp yasnippet lsp-java lsp-python-ms lsp-haskell helm-lsp lsp-treemacs dap-mode lsp-origami helm-lsp
-                 rust-mode php-mode typescript-mode kotlin-mode scala-mode
-                 flycheck erlang csharp-mode posframe vue-mode
-                 elixir-mode
-                 elm-mode))
+      '(;; lsp packages
+        ;; core
+        lsp-mode
 
-;; list the repositories containing them
+        ;; ui stuff + flycheck support
+        lsp-ui
+
+        ;; more ui stuff
+        lsp-treemacs
+
+        ;; company support
+        company-lsp
+
+        ;; java support
+        lsp-java
+
+        ;; ms python support
+        lsp-python-ms
+
+        ;; haskell support
+        lsp-haskell
+
+        ;; ccls support
+        ccls
+
+        ;; helm support
+        helm-lsp
+
+        ;; code folding support
+        lsp-origami
+
+        ;; helm interation
+        helm-lsp
+
+        ;; debugger support
+        dap-mode
+
+        ;; helpers
+        yasnippet
+
+        ;; major modes not in core
+        rust-mode php-mode typescript-mode kotlin-mode scala-mode flycheck erlang csharp-mode
+        posframe vue-mode elixir-mode elm-mode))
+
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")))
 
@@ -16,19 +53,13 @@
 
 (package-install-selected-packages)
 
+;; lsp configuration begin
 (with-eval-after-load 'lsp-mode
-  ;; uncomment if you prefer ccls over clangd
-  ;; (require 'ccls)
-  (require 'lsp-java)
-
-  ;; otherwise kotlin language server won't work
-  (setq lsp-kotlin-compiler-jvm-target "1.8"
-        ;; comment if you prefer flymake
-        lsp-prefer-flymake nil))
-
+  (require 'yasnippet))
 
 (add-hook 'prog-mode-hook 'lsp)
 (add-hook 'vue-mode-hook 'lsp)
+;; lsp configuration end
 
 ;; non lsp related stuff
 (ido-mode)

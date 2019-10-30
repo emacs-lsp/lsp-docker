@@ -180,3 +180,5 @@ RUN mix elixir_ls.release -o /elixir-release
 ENV PATH="/elixir-release/:${PATH}"
 
 COPY local /root/.local
+
+WORKDIR /
