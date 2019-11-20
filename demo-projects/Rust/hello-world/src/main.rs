@@ -1,5 +1,5 @@
 
-fn main() {
-    let mut s = 100;
-    s = 10;
+
+fn mm() {
+    let boo0 = 10000;
 }

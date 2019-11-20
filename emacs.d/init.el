@@ -67,3 +67,5 @@
 (with-eval-after-load 'cc-mode
   (define-key java-mode-map (kbd ";") nil)
   (define-key java-mode-map (kbd "(") nil))
+
+;; (require 'lsp-python-ms)

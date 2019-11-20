@@ -51,7 +51,7 @@ This function should only modify configuration layer settings."
      (typescript :variables typescript-backend 'lsp)
      (java :variables java-backend 'lsp)
      (ruby :variables ruby-backend 'lsp)
-     (c-c++ :variables c-c++-backend 'lsp-ccls)
+     ;; (c-c++ :variables c-c++-backend 'lsp-ccls)
      (go :variables go-backend 'lsp)
      (python :variables python-backend 'lsp python-lsp-server 'mspyls))
 
@@ -484,11 +484,19 @@ before packages are loaded."
   (spacemacs|define-jump-handlers sbt-mode)
   (add-hook 'sbt-mode-hook 'lsp)
 
+  (add-hook 'lsp-after-open-hook (lambda ()
+                                   (when (lsp-find-workspace 'rust-analyzer nil)
+                                     (lsp-rust-analyzer-inlay-hints-mode))))
+
+  (setq lsp-rust-analyzer-server-display-inlay-hints t)
+  (setq lsp-disabled-clients '(rls))
+
   (spacemacs|define-jump-handlers kotlin-mode)
   (add-hook 'kotlin-mode-hook 'lsp)
   (add-to-list 'exec-path "/kotlin-language-server/server/build/install/server/bin/")
   (setq lsp-kotlin-compiler-jvm-target "1.8")
 
+  ;; (setq lsp-rust-analyzer-)
 
   (setq lsp-xml-server-command '("java" "-jar" "/root/org.eclipse.lsp4xml.jar")
         lsp-xml-jar-file "/root/org.eclipse.lsp4xml.jar")
@@ -505,7 +513,9 @@ before packages are loaded."
   (spacemacs|define-jump-handlers elm-mode)
   (add-hook 'elm-mode-hook 'lsp)
 
-  (spacemacs|define-jump-handlers vue-mode)
+  (add-hook 'c++-mode-hook 'lsp)
+  (spacemacs|define-jump-handlers c++-mode)
+
   (add-hook 'vue-mode-hook 'lsp)
 
   (with-eval-after-load 'smartparens
@@ -523,35 +533,17 @@ before packages are loaded."
   (add-hook 'java-mode-hook
             (lambda ()
               (setq-local tab-width 2)
-              (setq-local  c-basic-offset 2)))
+              (setq-local c-basic-offset 2)))
 
   (setq-default company-frontends '(company-pseudo-tooltip-frontend))
   (setq company-minimum-prefix-length 0
         company-idle-delay 0.0)
 
-  (define-key lsp-mode-map (kbd "TAB") 'company-indent-or-complete-common)
+  (with-eval-after-load 'lsp-mode-map
+    (define-key lsp-mode-map (kbd "TAB") 'company-indent-or-complete-common))
 
   (with-eval-after-load 'company
     (company-posframe-mode))
 
   (configuration-layer/lazy-install 'lsp :extensions '("\\(\\.elm\\'\\)" elm-mode))
   (configuration-layer/lazy-install 'lsp :extensions '("\\(\\.amk\\'\\|/Amkfile\\'\\|\\.phtml\\'\\|\\.php[s345t]?\\'\\|[^/]\\.\\(module\\|test\\|install\\|profile\\|tpl\\.php\\|theme\\|inc\\)\\'\\|\\.php\\'\\)" php-mode)))
-(defun dotspacemacs/emacs-custom-settings ()
-  "Emacs custom settings.
-This is an auto-generated function, do not modify its content directly, use
-Emacs customize menu instead.
-This function is called at the very end of Spacemacs initialization."
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(web-mode flycheck-elm elm-test-runner elm-mode reformatter yasnippet-snippets yapfify ws-butler writeroom-mode winum which-key web-beautify volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile treemacs-evil toml-mode toc-org tide symon symbol-overlay string-inflection spaceline-all-the-icons smeargle seeing-is-believing scala-mode rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocopfmt rubocop rspec-mode robe restart-emacs rbenv rake rainbow-delimiters racer pytest pyenv-mode py-isort prettier-js popwin pippel pipenv pip-requirements php-mode persp-mode password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nodejs-repl nameless mvn move-text minitest meghanada maven-test-mode magit-svn magit-gitflow macrostep lsp-ui lsp-treemacs lsp-python-ms lsp-java lorem-ipsum livid-mode live-py-mode link-hint kotlin-mode json-navigator json-mode js2-refactor js-doc indent-guide importmagic hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-rtags helm-pydoc helm-purpose helm-projectile helm-mode-manager helm-make helm-lsp helm-gitignore helm-git-grep helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag groovy-mode groovy-imports gradle-mode google-translate google-c-style golden-ratio godoctor go-tag go-rename go-impl go-guru go-gen-test go-fill-struct go-eldoc gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link fuzzy font-lock+ flycheck-rust flycheck-rtags flycheck-pos-tip flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline disaster diminish devdocs define-word dap-mode cython-mode cquery cpp-auto-include company-tern company-statistics company-rtags company-posframe company-lsp company-go company-emacs-eclim company-c-headers company-anaconda column-enforce-mode clean-aindent-mode clang-format chruby centered-cursor-mode ccls cargo bundler blacken auto-yasnippet auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line ac-ispell)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-)

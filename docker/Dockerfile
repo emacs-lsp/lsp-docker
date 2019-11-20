@@ -1,5 +1,6 @@
 FROM ubuntu:18.04
 
+
 RUN apt-get update && apt-get install -y wget software-properties-common curl
 RUN apt-get install gnupg -y
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
@@ -180,5 +181,23 @@ RUN mix elixir_ls.release -o /elixir-release
 ENV PATH="/elixir-release/:${PATH}"
 
 COPY local /root/.local
+
+WORKDIR /
+
+# RUST analyzer
+
+RUN git clone https://github.com/rust-analyzer/rust-analyzer
+WORKDIR rust-analyzer
+RUN rustup update
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust-install.sh
+RUN sh  /tmp/rust-install.sh -y
+RUN rustup default nightly
+RUN rustc --version
+RUN  cargo xtask install --server
+RUN rustc --version
+
+# RLS
+
+RUN ~/.cargo/bin/rustup component add rls rust-analysis rust-src
 
 WORKDIR /
