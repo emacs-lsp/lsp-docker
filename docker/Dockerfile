@@ -7,8 +7,8 @@ RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
 RUN add-apt-repository ppa:longsleep/golang-backports
 RUN add-apt-repository ppa:laurent-boulard/fonts
-RUN echo deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main >> /etc/apt/sources.list
-RUN echo deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main
+RUN echo deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main >> /etc/apt/sources.list
+RUN echo deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main
 RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
 RUN apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
 RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
@@ -155,7 +155,7 @@ RUN mkdir ~/haxelib && haxelib setup ~/haxelib
 
 # haxe language server
 RUN git clone https://github.com/vshaxe/haxe-language-server
-WORKDIR haxe-language-server
+WORKDIR /haxe-language-server
 RUN npm install
 RUN npx lix run vshaxe-build -t language-server
 
@@ -165,14 +165,13 @@ RUN mv /home/lsp/haxe-language-server ~/.haxe-language-server
 
 # fasd
 RUN git clone https://github.com/clvv/fasd && cd fasd && make install
-
 COPY local /home/lsp/.local
 
 RUN  npm install -g elm-test elm-format --unsafe-perm=true --allow-root
 
 # elixir
 RUN git clone https://github.com/elixir-lsp/elixir-ls
-WORKDIR elixir-ls
+WORKDIR /elixir-ls
 RUN apt-get install -y elixir
 RUN mix local.hex --force compile
 RUN mix local.rebar --force
@@ -187,7 +186,7 @@ WORKDIR /
 # RUST analyzer
 
 RUN git clone https://github.com/rust-analyzer/rust-analyzer
-WORKDIR rust-analyzer
+WORKDIR /rust-analyzer
 RUN rustup update
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust-install.sh
 RUN sh  /tmp/rust-install.sh -y
@@ -195,9 +194,5 @@ RUN rustup default nightly
 RUN rustc --version
 RUN  cargo xtask install --server
 RUN rustc --version
-
-# RLS
-
-RUN ~/.cargo/bin/rustup component add rls rust-analysis rust-src
 
 WORKDIR /
