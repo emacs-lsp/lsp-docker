@@ -21,3 +21,5 @@ node_modules
 emacs.d
 /start-emacs-my-config.sh
 .elixir_ls
+Debug
+.log

@@ -196,3 +196,18 @@ RUN  cargo xtask install --server
 RUN rustc --version
 
 WORKDIR /
+
+# powershell
+RUN wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
+
+# Register the Microsoft repository GPG keys
+RUN  dpkg -i packages-microsoft-prod.deb
+
+# Update the list of products
+RUN apt-get update
+
+# Enable the "universe" repositories
+RUN add-apt-repository universe
+
+# Install PowerShell
+RUN apt-get install -y powershell
