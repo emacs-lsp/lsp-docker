@@ -1,6 +1,5 @@
- // 
+#include <iostream>
 
-struct something_else {
-  something_else() {}
-};
-
+int main () {
+  std::cout;
+}

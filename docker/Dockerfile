@@ -211,3 +211,9 @@ RUN add-apt-repository universe
 
 # Install PowerShell
 RUN apt-get install -y powershell
+
+RUN ~/.cargo/bin/rustup component add rls rust-analysis rust-src
+
+#
+RUN apt-get install -y clang-tools-9 clangd-9
+RUN update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-9 100
