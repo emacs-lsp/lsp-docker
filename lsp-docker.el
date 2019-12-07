@@ -56,8 +56,7 @@
 
 (defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
   (split-string
-   (format "docker exec -i %s %s" docker-container-name server-command)
-   ))
+   (format "docker exec -i %s %s" docker-container-name server-command)))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
@@ -75,14 +74,19 @@
                                                           path-mappings
                                                           docker-container-name)
               (lsp--client-path->uri-fn client) (-partial #'lsp--docker-path->uri path-mappings)
-              (lsp--client-new-connection client) (lsp-stdio-connection
-                                                   (lambda ()
-                                                     (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                                              docker-container-name
-                                                              path-mappings
-                                                              docker-image-id
-                                                              server-command)
-                                                     ))
+              (lsp--client-new-connection client) (plist-put
+                                                   (lsp-stdio-connection
+                                                    (lambda ()
+                                                      (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                                               docker-container-name
+                                                               path-mappings
+                                                               docker-image-id
+                                                               server-command)))
+                                                   :test? (lambda (&rest _)
+                                                            (-any?
+                                                             (-lambda ((dir))
+                                                               (f-ancestor-of? dir (buffer-file-name)))
+                                                             path-mappings)))
               (lsp--client-priority client) (or priority (lsp--client-priority client)))
         (lsp-register-client client))
     (user-error "No such client %s" server-id)))
@@ -113,7 +117,7 @@
    :launch-server-cmd-fn #'lsp-docker-launch-new-container)
 
   (lsp-docker-register-client
-   :server-id 'pyls
+   :server-id 'clangd
    :priority priority
    :docker-server-id 'clangd-docker
    :docker-image-id docker-image-id
