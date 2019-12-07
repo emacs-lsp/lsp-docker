@@ -100,7 +100,7 @@
    :docker-container-name docker-container-name
    :server-command "rls"
    :path-mappings path-mappings
-   :launch-container-server #'lsp-docker-launch-new-container)
+   :launch-server-cmd-fn #'lsp-docker-launch-new-container)
 
   (lsp-docker-register-client
    :server-id 'pyls
@@ -110,7 +110,7 @@
    :docker-container-name docker-container-name
    :server-command "pyls"
    :path-mappings path-mappings
-   :launch-container-server #'lsp-docker-launch-new-container))
+   :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here

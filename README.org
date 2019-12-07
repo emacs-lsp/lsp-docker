@@ -95,6 +95,7 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
     - add it to load path and register the docker clients(currently =pyls= and =rls= are supported, but adding other clients is trivial).
     #+begin_src elisp
       (add-to-list 'load-path "<path-to-lsp-docker-dir>")
+      (require 'lsp-docker)
       ;; register the clients
       (lsp-docker-init-default-clients
        :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
