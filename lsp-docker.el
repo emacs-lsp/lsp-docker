@@ -110,6 +110,16 @@
    :docker-container-name docker-container-name
    :server-command "pyls"
    :path-mappings path-mappings
+   :launch-server-cmd-fn #'lsp-docker-launch-new-container)
+
+  (lsp-docker-register-client
+   :server-id 'pyls
+   :priority priority
+   :docker-server-id 'clangd-docker
+   :docker-image-id docker-image-id
+   :docker-container-name docker-container-name
+   :server-command "clangd"
+   :path-mappings path-mappings
    :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 
 (provide 'lsp-docker)
