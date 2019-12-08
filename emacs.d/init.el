@@ -41,7 +41,7 @@
 
         ;; major modes not in core
         rust-mode php-mode typescript-mode kotlin-mode scala-mode flycheck erlang csharp-mode
-        posframe vue-mode elixir-mode elm-mode powershell go-mode))
+        posframe vue-mode elixir-mode elm-mode powershell go-mode rjsx-mode))
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")))
