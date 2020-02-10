@@ -45,7 +45,7 @@
 (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
   (split-string
    (--doto (format "docker run --name %s --rm -i %s %s %s"
-                   docker-container-name
+                   (format "%s-%d" docker-container-name (random 1000))
                    (->> path-mappings
                         (-map (-lambda ((path . docker-path))
                                 (format "-v %s:%s" path docker-path)))
