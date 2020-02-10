@@ -107,6 +107,16 @@
    :launch-server-cmd-fn #'lsp-docker-launch-new-container)
 
   (lsp-docker-register-client
+   :server-id 'gopls
+   :priority priority
+   :docker-server-id 'gopls-docker
+   :docker-image-id docker-image-id
+   :docker-container-name docker-container-name
+   :server-command "gopls"
+   :path-mappings path-mappings
+   :launch-server-cmd-fn #'lsp-docker-launch-new-container)
+
+  (lsp-docker-register-client
    :server-id 'pyls
    :priority priority
    :docker-server-id 'pyls-docker

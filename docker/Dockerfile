@@ -96,6 +96,7 @@ RUN ./coursier bootstrap \
 
 # GO
 RUN go get -u golang.org/x/tools/cmd/gopls
+ENV PATH="/root/go/bin:${PATH}"
 
 # ruby
 RUN gem install solargraph
