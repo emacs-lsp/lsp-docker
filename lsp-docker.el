@@ -44,7 +44,6 @@
 
 (let ((lsp-docker-name-suffix 0))
   (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
-    (progn
       (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
       (split-string
        (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
@@ -56,13 +55,12 @@
 			    (s-join " "))
 		       docker-image-id
 		       server-command))
-       " ")))
+       " "))
 
   (defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
-    (progn
       (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
       (split-string
-       (format "docker exec -i %s %s" docker-container-name server-command)))))
+       (format "docker exec -i %s %s" docker-container-name server-command))))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
