@@ -44,7 +44,7 @@
 
 (let ((lsp-docker-name-suffix 0))
   (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
-      (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
+      (cl-incf lsp-docker-name-suffix)
       (split-string
        (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
 		       docker-container-name
