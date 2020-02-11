@@ -42,21 +42,27 @@
        (s-replace local remote path)
      (user-error "The path %s is not under path mappings" path))))
 
-(defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
-  (split-string
-   (--doto (format "docker run --name %s --rm -i %s %s %s"
-                   (format "%s-%d" docker-container-name (random 1000))
-                   (->> path-mappings
-                        (-map (-lambda ((path . docker-path))
-                                (format "-v %s:%s" path docker-path)))
-                        (s-join " "))
-                   docker-image-id
-                   server-command))
-   " "))
+(let ((lsp-docker-name-suffix 0))
+  (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
+    (progn
+      (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
+      (split-string
+       (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
+		       docker-container-name
+		       lsp-docker-name-suffix
+		       (->> path-mappings
+			    (-map (-lambda ((path . docker-path))
+				    (format "-v %s:%s" path docker-path)))
+			    (s-join " "))
+		       docker-image-id
+		       server-command))
+       " ")))
 
-(defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
-  (split-string
-   (format "docker exec -i %s %s" docker-container-name server-command)))
+  (defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
+    (progn
+      (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
+      (split-string
+       (format "docker exec -i %s %s" docker-container-name server-command)))))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
