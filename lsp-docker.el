@@ -110,9 +110,7 @@
                                            (docker-container-name "lsp-container")
                                            (priority 10))
   (seq-do (lambda (package) (require package nil t)) lsp-docker-default-client-packages)
-  (seq-do (lambda (clientInfo)
-	    (cl-destructuring-bind (&key server-id docker-server-id server-command)
-		clientInfo
+  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
 	      (lsp-docker-register-client
 	       :server-id server-id
 	       :priority priority
@@ -121,7 +119,7 @@
 	       :docker-container-name docker-container-name
 	       :server-command server-command
 	       :path-mappings path-mappings
-	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+	       :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 	  lsp-docker-default-clients))
 
 (provide 'lsp-docker)
