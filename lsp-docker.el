@@ -110,7 +110,7 @@
                                            (docker-container-name "lsp-container")
                                            (priority 10))
   (seq-do (lambda (package) (require package nil t)) lsp-docker-default-client-packages)
-  (seq-do (-lambda ((&plist :server-id server-id :docker-server-id docker-server-id :server-command server-command))
+  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
 	      (lsp-docker-register-client
 	       :server-id server-id
 	       :priority priority
