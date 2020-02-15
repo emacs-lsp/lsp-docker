@@ -3,7 +3,11 @@
 ;; Copyright (C) 2019  Ivan Yonchovski
 
 ;; Author: Ivan Yonchovski <yyoncho@gmail.com>
-;; Keywords:
+;; URL: https://github.com/emacs-lsp/lsp-docker
+;; Keywords: languages langserver
+;; Version: 1.0.0
+;; Package-Requires: ((emacs "25.1") (dash "2.14.1"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,13 +24,13 @@
 
 ;;; Commentary:
 
-;;
+;; Runs lanaguage servers in containers
 
 ;;; Code:
 (require 'lsp-mode)
 (require 'dash)
 
-(defun lsp--docker-uri->path (path-mappings docker-container-name uri)
+(defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   (let ((path (lsp--uri-to-path-1 uri)))
     (-if-let ((local . remote) (-first (-lambda ((_ . docker-path))
                                          (s-contains? docker-path path))
@@ -34,7 +38,7 @@
         (s-replace remote local path)
       (format "/docker:%s:%s" docker-container-name path))))
 
-(defun lsp--docker-path->uri (path-mappings path)
+(defun lsp-docker--path->uri (path-mappings path)
   (lsp--path-to-uri-1
    (-if-let ((local . remote) (-first (-lambda ((local-path . _))
                                         (s-contains? local-path path))
@@ -74,10 +78,10 @@
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
         (setf (lsp--client-server-id client) docker-server-id
-              (lsp--client-uri->path-fn client) (-partial #'lsp--docker-uri->path
+              (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
                                                           path-mappings
                                                           docker-container-name)
-              (lsp--client-path->uri-fn client) (-partial #'lsp--docker-path->uri path-mappings)
+              (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
               (lsp--client-new-connection client) (plist-put
                                                    (lsp-stdio-connection
                                                     (lambda ()
