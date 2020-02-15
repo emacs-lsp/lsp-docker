@@ -100,13 +100,15 @@
     (user-error "No such client %s" server-id)))
 
 (defvar lsp-docker-default-client-packages
-  '(lsp-rust lsp-go lsp-pyls lsp-clients))
+  '(lsp-rust lsp-go lsp-pyls lsp-clients)
+  "List of client packages to load")
 
-(defvar lsp-docker-default-clients
+(defvar lsp-docker-default-client-configs
   (list (list :server-id 'rls :docker-server-id 'rls-docker :server-command "rls")
 	(list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
 	(list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd")))
+	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd"))
+  "List of client configuration")
 
 (cl-defun lsp-docker-init-default-clients (&key
                                            path-mappings
@@ -123,8 +125,8 @@
 	       :docker-container-name docker-container-name
 	       :server-command server-command
 	       :path-mappings path-mappings
-	       :launch-server-cmd-fn #'lsp-docker-launch-new-container))
-	  lsp-docker-default-clients))
+	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+	  lsp-docker-default-clients-configs))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
