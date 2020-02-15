@@ -94,15 +94,13 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
     #+end_src
     - add it to load path and register the docker clients(currently =pyls= and =rls= are supported, but adding other clients is trivial).
     #+begin_src elisp
-    (with-eval-after-load 'lsp-clients
-      (add-to-list 'load-path "<path-to-lsp-docker-dir>")
-      (require 'lsp-docker)
-      ;; register the clients
-      (lsp-docker-init-default-clients
-       :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
-       :docker-image-id "yyoncho/lsp-emacs-docker"
-       :docker-container-name "lsp-container"
-       :priority 2))
+    (add-to-list 'load-path "<path-to-lsp-docker-dir>")
+    (require 'lsp-docker)
+    (lsp-docker-init-default-clients
+      :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
+      :docker-image-id "yyoncho/lsp-emacs-docker"
+      :docker-container-name "lsp-container"
+      :priority 5)
 
     #+end_src
 *** How it works
