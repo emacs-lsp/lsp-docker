@@ -110,13 +110,18 @@
 	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd"))
   "List of client configuration")
 
-(cl-defun lsp-docker-init-default-clients (&key
-                                           path-mappings
-                                           (docker-image-id "yyoncho/lsp-emacs-docker")
-                                           (docker-container-name "lsp-container")
-                                           (priority 10))
-  (seq-do (lambda (package) (require package nil t)) lsp-docker-default-client-packages)
-  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
+(cl-defun lsp-docker-init-clients (&key
+					path-mappings
+					(docker-image-id "yyoncho/lsp-emacs-docker")
+					(docker-container-name "lsp-container")
+					(priority 10)
+					(client-packages lsp-docker-default-client-packages)
+					(client-configs lsp-docker-default-client-configs))
+  (seq-do (lambda (package) (require package nil t)) client-packages)
+  (seq-do (lambda (clientInfo)
+	    (cl-destructuring-bind (&key server-id docker-server-id server-command)
+		clientInfo
+	      (message server-command)
 	      (lsp-docker-register-client
 	       :server-id server-id
 	       :priority priority
@@ -126,11 +131,7 @@
 	       :server-command server-command
 	       :path-mappings path-mappings
 	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
-	  lsp-docker-default-client-configs))
+	  client-configs))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
-
-;; Local Variables:
-;; flycheck-disabled-checkers: (emacs-lisp-checkdoc)
-;; End:
