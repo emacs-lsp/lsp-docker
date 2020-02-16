@@ -24,7 +24,7 @@
 
 ;;; Commentary:
 
-;; Runs lanaguage servers in containers
+;; Run language servers in containers
 
 ;;; Code:
 (require 'lsp-mode)
