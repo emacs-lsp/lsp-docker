@@ -126,7 +126,7 @@
 	       :server-command server-command
 	       :path-mappings path-mappings
 	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
-	  lsp-docker-default-clients-configs))
+	  lsp-docker-default-client-configs))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
