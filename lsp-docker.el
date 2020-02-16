@@ -31,6 +31,7 @@
 (require 'dash)
 
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
+  "Turn docker uri in host path."
   (let ((path (lsp--uri-to-path-1 uri)))
     (-if-let ((local . remote) (-first (-lambda ((_ . docker-path))
                                          (s-contains? docker-path path))
@@ -39,6 +40,7 @@
       (format "/docker:%s:%s" docker-container-name path))))
 
 (defun lsp-docker--path->uri (path-mappings path)
+  "Turn host path into docker uri."
   (lsp--path-to-uri-1
    (-if-let ((local . remote) (-first (-lambda ((local-path . _))
                                         (s-contains? local-path path))
