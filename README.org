@@ -130,4 +130,6 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
    Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
 ** See also
    - [[https://github.com/Silex/docker.el][docker]] - package for managing =docker= images/containers.
-     
+** Maintainers
+   - [[https://github.com/yyoncho][yyoncho]]
+   - [[https://github.com/rnikoopour][rnikoopour]]
