@@ -135,3 +135,7 @@
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
+
+;; Local Variables:
+;; flycheck-disabled-checkers: (emacs-lisp-checkdoc)
+;; End:

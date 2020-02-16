@@ -96,7 +96,7 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
     #+begin_src elisp
     (add-to-list 'load-path "<path-to-lsp-docker-dir>")
     (require 'lsp-docker)
-    (lsp-docker-init-default-clients
+    (lsp-docker-init-clients
       :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
       :docker-image-id "yyoncho/lsp-emacs-docker"
       :docker-container-name "lsp-container"
@@ -109,3 +109,4 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
    Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
 ** See also
    - [[https://github.com/Silex/docker.el][docker]] - package for managing =docker= images/containers.
+     
