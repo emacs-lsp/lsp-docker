@@ -3,7 +3,11 @@
 ;; Copyright (C) 2019  Ivan Yonchovski
 
 ;; Author: Ivan Yonchovski <yyoncho@gmail.com>
-;; Keywords:
+;; URL: https://github.com/emacs-lsp/lsp-docker
+;; Keywords: languages langserver
+;; Version: 1.0.0
+;; Package-Requires: ((emacs "25.1") (dash "2.14.1") (lsp-mode "6.2.1"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,13 +24,14 @@
 
 ;;; Commentary:
 
-;;
+;; Run language servers in containers
 
 ;;; Code:
 (require 'lsp-mode)
 (require 'dash)
 
-(defun lsp--docker-uri->path (path-mappings docker-container-name uri)
+(defun lsp-docker--uri->path (path-mappings docker-container-name uri)
+  "Turn docker uri into host path."
   (let ((path (lsp--uri-to-path-1 uri)))
     (-if-let ((local . remote) (-first (-lambda ((_ . docker-path))
                                          (s-contains? docker-path path))
@@ -34,7 +39,8 @@
         (s-replace remote local path)
       (format "/docker:%s:%s" docker-container-name path))))
 
-(defun lsp--docker-path->uri (path-mappings path)
+(defun lsp-docker--path->uri (path-mappings path)
+  "Turn host path into docker uri."
   (lsp--path-to-uri-1
    (-if-let ((local . remote) (-first (-lambda ((local-path . _))
                                         (s-contains? local-path path))
@@ -74,10 +80,10 @@
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
         (setf (lsp--client-server-id client) docker-server-id
-              (lsp--client-uri->path-fn client) (-partial #'lsp--docker-uri->path
+              (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
                                                           path-mappings
                                                           docker-container-name)
-              (lsp--client-path->uri-fn client) (-partial #'lsp--docker-path->uri path-mappings)
+              (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
               (lsp--client-new-connection client) (plist-put
                                                    (lsp-stdio-connection
                                                     (lambda ()
@@ -96,21 +102,28 @@
     (user-error "No such client %s" server-id)))
 
 (defvar lsp-docker-default-client-packages
-  '(lsp-rust lsp-go lsp-pyls lsp-clients))
+  '(lsp-rust lsp-go lsp-pyls lsp-clients)
+  "List of client packages to load")
 
-(defvar lsp-docker-default-clients
+(defvar lsp-docker-default-client-configs
   (list (list :server-id 'rls :docker-server-id 'rls-docker :server-command "rls")
 	(list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
 	(list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd")))
+	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd"))
+  "List of client configuration")
 
-(cl-defun lsp-docker-init-default-clients (&key
-                                           path-mappings
-                                           (docker-image-id "yyoncho/lsp-emacs-docker")
-                                           (docker-container-name "lsp-container")
-                                           (priority 10))
-  (seq-do (lambda (package) (require package nil t)) lsp-docker-default-client-packages)
-  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
+(cl-defun lsp-docker-init-clients (&key
+					path-mappings
+					(docker-image-id "yyoncho/lsp-emacs-docker")
+					(docker-container-name "lsp-container")
+					(priority 10)
+					(client-packages lsp-docker-default-client-packages)
+					(client-configs lsp-docker-default-client-configs))
+  (seq-do (lambda (package) (require package nil t)) client-packages)
+  (seq-do (lambda (clientInfo)
+	    (cl-destructuring-bind (&key server-id docker-server-id server-command)
+		clientInfo
+	      (message server-command)
 	      (lsp-docker-register-client
 	       :server-id server-id
 	       :priority priority
@@ -119,8 +132,8 @@
 	       :docker-container-name docker-container-name
 	       :server-command server-command
 	       :path-mappings path-mappings
-	       :launch-server-cmd-fn #'lsp-docker-launch-new-container))
-	  lsp-docker-default-clients))
+	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+	  client-configs))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
