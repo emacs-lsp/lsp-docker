@@ -119,8 +119,8 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
       :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
       :docker-image-id "yyoncho/lsp-emacs-docker"
       :docker-container-name "lsp-container"
-      :client-packages: lsp-docker-client-packages
-      :client-configs: lsp-docker-client-configs
+      :client-packages lsp-docker-client-packages
+      :client-configs lsp-docker-client-configs
       :priority 5)
 
     #+end_src
