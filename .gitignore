@@ -6,6 +6,8 @@
 
 # Backup files
 *~
+\#*
+.#*
 
 # Undo-tree save-files
 *.~undo-tree
@@ -23,3 +25,4 @@ emacs.d
 .elixir_ls
 Debug
 .log
+*.ccls-cache*
