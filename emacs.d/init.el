@@ -59,6 +59,8 @@
 
 (add-hook 'prog-mode-hook 'lsp)
 (add-hook 'vue-mode-hook 'lsp)
+
+(setq-default lsp-ui-sideline-show-hover t)
 ;; lsp configuration end
 
 ;; non lsp related stuff
