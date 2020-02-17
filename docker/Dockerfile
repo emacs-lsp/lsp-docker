@@ -30,7 +30,7 @@ RUN apt-get install -y clangd-9 \
 	&& ln -s /ccls/Release/ccls /usr/bin/ccls
 
 RUN apt-get install -y npm \
-	&& npm i -g bash-language-server
+	&& npm i -g bash-language-server vscode-css-languageserver-bin
 
 #RUN apt-get update && apt-get install -y wget software-properties-common curl
 #RUN apt-get install gnupg -y
