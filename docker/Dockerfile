@@ -83,19 +83,19 @@ RUN pip install fortran-language-server
 # RUN npm i -g bash-language-server
 
 # scala
-RUN curl -L -o coursier https://git.io/coursier
-RUN chmod +x coursier
+RUN curl -Lo coursier https://git.io/coursier-cli-linux && \
+	chmod +x coursier
 RUN ./coursier bootstrap \
-  --java-opt -Xss4m \
-  --java-opt -Xms100m \
-  --java-opt -Dmetals.client=emacs \
-  org.scalameta:metals_2.12:0.7.0 \
-  -r bintray:scalacenter/releases \
-  -r sonatype:snapshots \
-  -o /usr/local/bin/metals-emacs -f
+	--java-opt -Xss4m \
+	--java-opt -Xms100m \
+	--java-opt -Dmetals.client=emacs \
+	org.scalameta:metals_2.12:0.7.0 \
+	-r bintray:scalacenter/releases \
+	-r sonatype:snapshots \
+	-o /usr/local/bin/metals-emacs -f
 
 # GO
-RUN go get -u golang.org/x/tools/cmd/gopls
+RUN go get -u golang.org/x/tools/gopls
 ENV PATH="/root/go/bin:${PATH}"
 
 # ruby
@@ -155,10 +155,10 @@ WORKDIR /home/lsp
 RUN mkdir ~/haxelib && haxelib setup ~/haxelib
 
 # haxe language server
-RUN git clone https://github.com/vshaxe/haxe-language-server
-WORKDIR /haxe-language-server
-RUN npm install
-RUN npx lix run vshaxe-build -t language-server
+RUN git clone https://github.com/vshaxe/haxe-language-server \
+	&& cd haxe-language-server \
+	&& npm install \
+	&& npx lix run vshaxe-build -t language-server
 
 USER root
 WORKDIR /
