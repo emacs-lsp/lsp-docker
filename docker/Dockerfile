@@ -29,6 +29,9 @@ RUN apt-get install -y clangd-9 \
 	&& ln -s `which clangd-9` /usr/bin/clangd \
 	&& ln -s /ccls/Release/ccls /usr/bin/ccls
 
+RUN apt-get install -y npm \
+	&& npm i -g bash-language-server
+
 #RUN apt-get update && apt-get install -y wget software-properties-common curl
 #RUN apt-get install gnupg -y
 #RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
