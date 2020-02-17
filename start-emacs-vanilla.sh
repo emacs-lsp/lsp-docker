@@ -1,9 +1,8 @@
 IS_DARWIN=`uname | grep -i darwin`
+
+# The following mounts are protected in Darwin and can't be used
 LOCAL_TIME_VOLUME=`[ -z "$IS_DARWIN" ] &&  echo "-v /etc/localtime:/etc/localtime:ro"`
 SYSTEM_BUS_SOCKET_VOLUME=`[ -z "$IS_DARWIN" ] && echo "-v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket"`
-
-echo $SYSTEM_BUS_SOCKET_VOLUME
-
 
 docker run -ti --rm -v $('pwd'):/mnt/workspace \
        $LOCAL_TIME_VOLUME \
@@ -19,3 +18,4 @@ docker run -ti --rm -v $('pwd'):/mnt/workspace \
        -e DISPLAY=$DISPLAY \
        -e TZ=UA \
        emacslsp/lsp-docker-full:latest emacs $*
+#       yyoncho/lsp-emacs-docker emacs $*
