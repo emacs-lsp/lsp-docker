@@ -1,3 +1,14 @@
+FROM ubuntu:18.04 AS ccls
+RUN apt-get update \
+	&& apt-get upgrade -y \
+	&& apt-get install -y build-essential cmake clang libclang-dev zlib1g-dev git wget \
+	&& git clone --depth=1 --recursive https://github.com/MaskRay/ccls \
+	&& cd ccls \
+	&& wget -c http://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz \
+	&& tar xf clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz \
+	&& cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$PWD/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 \
+	&& cmake --build Release
+
 FROM ubuntu:18.04
 
 # General
@@ -13,13 +24,10 @@ RUN apt-get install -y autoconf texinfo libgnutls28-dev libxml2-dev libncurses5-
 	&& make -j4 && make install
 
 # C-Family
-RUN apt-get install -y cmake clang libclang-dev wget \
-	&& git clone --depth=1 --recursive https://github.com/MaskRay/ccls \
-	&& cd ccls \
-	&& wget -c http://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz \
-	&& tar xf clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz \
-	&& cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$PWD/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 \
-	&& cmake --build Release --target install
+COPY --from=ccls /ccls /ccls
+RUN apt-get install -y clangd-9 \
+	&& ln -s `which clangd-9` /usr/bin/clangd \
+	&& ln -s /ccls/Release/ccls /usr/bin/ccls
 
 #RUN apt-get update && apt-get install -y wget software-properties-common curl
 #RUN apt-get install gnupg -y
