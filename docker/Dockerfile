@@ -9,8 +9,15 @@ RUN apt-get update \
 	&& cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$PWD/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 \
 	&& cmake --build Release
 
-FROM ubuntu:18.04
+FROM ubuntu:18.04 AS go
+RUN apt-get update \
+	&& apt-get upgrade -y \
+	&& apt-get install -y wget \
+	&& wget -c https://dl.google.com/go/go1.13.8.linux-amd64.tar.gz \
+	&& tar -xzf go1.13.8.linux-amd64.tar.gz
 
+
+FROM ubuntu:18.04
 # General
 RUN apt-get update \
 	&& apt-get upgrade -y \ 
@@ -29,8 +36,18 @@ RUN apt-get install -y clangd-9 \
 	&& ln -s `which clangd-9` /usr/bin/clangd \
 	&& ln -s /ccls/Release/ccls /usr/bin/ccls
 
+# Go
+COPY --from=go /go /go
+ENV PATH "${PATH}:/go/bin:/root/go/bin"
+RUN /go/bin/go get -u golang.org/x/tools/gopls
+
+# NPM installed language servers
 RUN apt-get install -y npm \
-	&& npm i -g bash-language-server vscode-css-languageserver-bin
+	&& npm i -g \
+	bash-language-server \
+	vscode-css-languageserver-bin \
+	dockerfile-language-server-nodejs
+
 
 #RUN apt-get update && apt-get install -y wget software-properties-common curl
 #RUN apt-get install gnupg -y
