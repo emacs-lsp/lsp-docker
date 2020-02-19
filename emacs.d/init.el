@@ -40,9 +40,9 @@
         yasnippet
 
         ;; major modes not in core
-	dockerfile-mode go-mode))
+	dockerfile-mode go-mode typescript-mode))
 
-        ;;rust-mode php-mode typescript-mode kotlin-mode scala-mode flycheck erlang csharp-mode
+        ;;rust-mode php-mode  kotlin-mode scala-mode flycheck erlang csharp-mode
         ;;posframe vue-mode elixir-mode elm-mode powershell go-mode rjsx-mode))
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
@@ -62,6 +62,7 @@
 (add-hook 'prog-mode-hook 'lsp-deferred)
 (add-hook 'vue-mode-hook 'lsp-deferred)
 
+(setq lsp-log-io t)
 (setq-default lsp-ui-sideline-show-hover t)
 (require 'lsp-go)
 (require 'lsp-html)
