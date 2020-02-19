@@ -18,29 +18,16 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
    - Spacemacs configuration(.spacemacs) with enabled language servers.
    - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
    - Language servers:
-     | Language              | Language Server                           |
-     |-----------------------+-------------------------------------------|
-     | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]                      |
-     | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                                      |
-     | C++                   | [[https://clang.llvm.org/extra/clangd.html][clangd]]                                    |
-     | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                                       |
-     | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]]         |
-     | F#                    | [[https://github.com/fsharp/FsAutoComplete][fsautocomplete]]                            |
-     | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                                     |
-     | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                                      |
-     | Java                  | [[https://github.com/eclipse/eclipse.jdt.ls][Eclipse JDT LS]]                            |
-     | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]  (recommended) |
-     | JavaScript/TypeScript | [[https://github.com/sourcegraph/javascript-typescript-langserver][javascript-typescript-stdio]]               |
-     | JavaScript Flow       | [[https://flow.org][flow]] (add-on if working on a Flow file)   |
-     | Kotlin                | [[https://github.com/fwcd/KotlinLanguageServer][kotlin-language-server]]                    |
-     | PHP(recommended)      | [[https://github.com/bmewburn/vscode-intelephense][intelephense]]                              |
-     | Python                | [[https://github.com/palantir/python-language-server][pyls]]                                      |
-     | Python(Microsoft)     | [[https://github.com/Microsoft/python-language-server][Microsoft Python Language Server]]          |
-     | Ruby                  | [[https://github.com/castwide/solargraph][solargraph]]                                |
-     | Rust                  | [[https://github.com/rust-lang-nursery/rls][rls]]                                       |
-     | Scala                 | [[https://scalameta.org/metals][Metals]]                                    |
-     | Vue                   | [[https://github.com/vuejs/vetur/tree/master/server][vue-language-server]]                       |
-     | XML                   | [[https://github.com/angelozerr/lsp4xml][lsp4xml]]                                   |
+     | Language              | Language Server                   |
+     |-----------------------+-----------------------------------|
+     | Bash                  | [[https://github.com/mads-hartmann/bash-language-server][bash-language-server]]              |
+     | C++                   | [[https://github.com/MaskRay/ccls][ccls]]                              |
+     | CSS/LessCSS/SASS/SCSS | [[https://github.com/vscode-langservers/vscode-css-languageserver-bin][css]]                               |
+     | Dockerfile            | [[https://github.com/rcjsuen/dockerfile-language-server-nodejs][dockerfile-language-server-nodejs]] |
+     | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                             |
+     | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                              |
+     | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]        |
+     | Python                | [[https://github.com/palantir/python-language-server][pyls]]                              |
 ** Usage
    There are 3 supported modes:
 *** docker standalone
