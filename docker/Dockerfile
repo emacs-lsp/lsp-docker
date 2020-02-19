@@ -48,7 +48,9 @@ RUN apt-get install -y npm \
 	typescript-language-server \
 	typescript
 
-
+# Python
+RUN apt-get install -y python3-pip \
+	&& pip3 install 'python-language-server[all]'
 #RUN apt-get update && apt-get install -y wget software-properties-common curl
 #RUN apt-get install gnupg -y
 #RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
