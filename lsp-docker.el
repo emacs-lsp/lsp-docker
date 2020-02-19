@@ -1,4 +1,4 @@
-;;; lsp-docker.el --- LSP Docker integration         -*- lexical-binding: t; -*-
+;;; Lsp-docker.el --- LSP Docker integration         -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019  Ivan Yonchovski
 
@@ -31,7 +31,10 @@
 (require 'dash)
 
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
-  "Turn docker uri into host path."
+  "Turn docker URI into host path.
+Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
+Argument DOCKER-CONTAINER-NAME name to use when running container.
+Argument URI the uri to translate."
   (let ((path (lsp--uri-to-path-1 uri)))
     (-if-let ((local . remote) (-first (-lambda ((_ . docker-path))
                                          (s-contains? docker-path path))
@@ -40,7 +43,9 @@
       (format "/docker:%s:%s" docker-container-name path))))
 
 (defun lsp-docker--path->uri (path-mappings path)
-  "Turn host path into docker uri."
+  "Turn host PATH into docker uri.
+Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
+Argument PATH the path to translate."
   (lsp--path-to-uri-1
    (-if-let ((local . remote) (-first (-lambda ((local-path . _))
                                         (s-contains? local-path path))
@@ -103,14 +108,14 @@
 
 (defvar lsp-docker-default-client-packages
   '(lsp-rust lsp-go lsp-pyls lsp-clients)
-  "List of client packages to load")
+  "List of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
   (list (list :server-id 'rls :docker-server-id 'rls-docker :server-command "rls")
 	(list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
 	(list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
 	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd"))
-  "List of client configuration")
+  "List of client configuration.")
 
 (cl-defun lsp-docker-init-clients (&key
 					path-mappings
