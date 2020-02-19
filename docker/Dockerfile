@@ -32,9 +32,7 @@ RUN apt-get install -y autoconf texinfo libgnutls28-dev libxml2-dev libncurses5-
 
 # C-Family
 COPY --from=ccls /ccls /ccls
-RUN apt-get install -y clangd-9 \
-	&& ln -s `which clangd-9` /usr/bin/clangd \
-	&& ln -s /ccls/Release/ccls /usr/bin/ccls
+RUN ln -s /ccls/Release/ccls /usr/bin/ccls
 
 # Go
 COPY --from=go /go /go
@@ -46,7 +44,9 @@ RUN apt-get install -y npm \
 	&& npm i -g \
 	bash-language-server \
 	vscode-css-languageserver-bin \
-	dockerfile-language-server-nodejs
+	dockerfile-language-server-nodejs \
+	typescript-language-server \
+	typescript
 
 
 #RUN apt-get update && apt-get install -y wget software-properties-common curl
