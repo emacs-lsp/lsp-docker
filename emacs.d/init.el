@@ -1,37 +1,20 @@
 (setq package-selected-packages
       '(;; lsp packages
-        ;; core
-        lsp-mode
-
-        ;; ui stuff + flycheck support
-        lsp-ui
-
-        ;; more ui stuff
-        lsp-treemacs
-
-        ;; company support
-        company-lsp
-
-        ;; ccls support
-        ccls
-
-        ;; helm support
-        helm-lsp
-
-        ;; code folding support
-        lsp-origami
-
-        ;; helm interation
-        helm-lsp
-
-        ;; debugger support
-        dap-mode
-
-        ;; helpers
-        yasnippet
+        lsp-mode     ;; core
+        lsp-ui       ;; ui stuff + flycheck support
+        lsp-treemacs ;; more ui stuff
+        company-lsp  ;; company support
+        ccls         ;; ccls support
+        helm-lsp     ;; helm support
+        lsp-origami  ;; code folding support
+        helm-lsp     ;; helm interation
+        dap-mode     ;; debugger support
+        yasnippet    ;; helpers
 
         ;; major modes not in core
-				dockerfile-mode go-mode typescript-mode))
+	dockerfile-mode
+	go-mode
+	typescript-mode))
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")))
@@ -55,18 +38,6 @@
 (require 'lsp-go)
 (require 'lsp-html)
 ;; lsp configuration end
-(ido-mode)
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(dockerfile-mode lsp-mode lsp-ui lsp-treemacs company-lsp lsp-java lsp-python-ms lsp-haskell ccls helm-lsp lsp-origami helm-lsp dap-mode yasnippet rust-mode php-mode typescript-mode kotlin-mode scala-mode flycheck erlang csharp-mode posframe vue-mode elixir-mode elm-mode powershell go-mode rjsx-mode)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(yas-global-mode)
+(ido-mode)
