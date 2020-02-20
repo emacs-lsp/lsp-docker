@@ -31,7 +31,7 @@
         yasnippet
 
         ;; major modes not in core
-	dockerfile-mode go-mode typescript-mode))
+				dockerfile-mode go-mode typescript-mode))
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")))
@@ -55,6 +55,7 @@
 (require 'lsp-go)
 (require 'lsp-html)
 ;; lsp configuration end
+(ido-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
