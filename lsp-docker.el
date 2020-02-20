@@ -1,4 +1,4 @@
-;;; Lsp-docker.el --- LSP Docker integration         -*- lexical-binding: t; -*-
+;;; lsp-docker.el --- LSP Docker integration         -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019  Ivan Yonchovski
 
@@ -142,7 +142,3 @@ Argument PATH the path to translate."
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
-
-;; Local Variables:
-;; flycheck-disabled-checkers: (emacs-lisp-checkdoc)
-;; End:
