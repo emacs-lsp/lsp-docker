@@ -12,15 +12,6 @@
         ;; company support
         company-lsp
 
-        ;; java support
-        lsp-java
-
-        ;; ms python support
-        lsp-python-ms
-
-        ;; haskell support
-        lsp-haskell
-
         ;; ccls support
         ccls
 
@@ -41,9 +32,6 @@
 
         ;; major modes not in core
 	dockerfile-mode go-mode typescript-mode))
-
-        ;;rust-mode php-mode  kotlin-mode scala-mode flycheck erlang csharp-mode
-        ;;posframe vue-mode elixir-mode elm-mode powershell go-mode rjsx-mode))
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")))
@@ -68,14 +56,6 @@
 (require 'lsp-html)
 ;; lsp configuration end
 
-;; non lsp related stuff
-(ido-mode)
-
-(with-eval-after-load 'cc-mode
-  (define-key java-mode-map (kbd ";") nil)
-  (define-key java-mode-map (kbd "(") nil))
-
-;; (require 'lsp-python-ms)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
