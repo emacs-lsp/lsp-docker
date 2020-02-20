@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "target": "ES6",
-        "moduleResolution": "Node",
-        "jsx": "react",
-        "jsxFactory": "jsx"
-    },
-    "include": ["src/**/*"]
-}
