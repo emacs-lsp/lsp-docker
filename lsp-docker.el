@@ -114,7 +114,7 @@ Argument PATH the path to translate."
   (list (list :server-id 'rls :docker-server-id 'rls-docker :server-command "rls")
 	(list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
 	(list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "clangd"))
+	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls"))
   "List of client configuration.")
 
 (cl-defun lsp-docker-init-clients (&key
