@@ -119,7 +119,7 @@ Argument PATH the path to translate."
 
 (cl-defun lsp-docker-init-clients (&key
 					path-mappings
-					(docker-image-id "yyoncho/lsp-emacs-docker")
+					(docker-image-id "emacslsp/lsp-docker-langservers")
 					(docker-container-name "lsp-container")
 					(priority 10)
 					(client-packages lsp-docker-default-client-packages)
