@@ -111,10 +111,15 @@ Argument PATH the path to translate."
   "List of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
-  (list (list :server-id 'rls :docker-server-id 'rls-docker :server-command "rls")
-	(list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
-	(list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-	(list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls"))
+  (list
+   (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
+   (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
+   (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
+   (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
+   (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
+   (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
+   (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
+   (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio"))
   "List of client configuration.")
 
 (cl-defun lsp-docker-init-clients (&key
