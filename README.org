@@ -1,5 +1,8 @@
 #+ATTR_HTML: align="center"; margin-right="auto"; margin-left="auto"
-Docker image + scripts for running =lsp-mode= in =docker= environment.
+=lsp-mode= uses =lsp-docker= to run language servers using in containers
+
+[[./images/logo.png]]
+
 * Table of Contents                                       :TOC_4_gh:noexport:
   - [[#preconfigured-language-servers][Preconfigured language servers]]
   - [[#usage][Usage]]
@@ -13,10 +16,7 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
   - [[#see-also][See also]]
 
 ** Preconfigured language servers
-   The docker has the following content:
-   - =Emacs27= compiled with native JSON support for better performance.
-   - Spacemacs configuration(.spacemacs) with enabled language servers.
-   - Minimal vanilla configuration (init.el) installing and configuring all the language servers from the table above.
+   =lsp-docker-langservers= has the following content:
    - Language servers:
      | Language              | Language Server                   |
      |-----------------------+-----------------------------------|
@@ -29,90 +29,83 @@ Docker image + scripts for running =lsp-mode= in =docker= environment.
      | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]        |
      | Python                | [[https://github.com/palantir/python-language-server][pyls]]                              |
 ** Usage
-   There are 3 supported modes:
-*** docker standalone
-    Run emacs and language servers in the docker container.
-**** Spacemacs
-     - Clone spacemacs repo
-     #+begin_src bash
-       # Clone spacemacs develop
-       git clone -b develop https://github.com/syl20bnr/spacemacs ~/.emacs.d-docker
-     #+end_src
-     - Clone =lsp-docker=.
-     #+begin_src bash
-       git clone https://github.com/emacs-lsp/lsp-docker
-     #+end_src
-     - Run
-       #+begin_src bash
-         docker run -ti --rm -v $('pwd'):/mnt/workspace \
-                -v /etc/localtime:/etc/localtime:ro \
-                -v ~/.gnupg:${UHOME}/.gnupg \
-                -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-                -v /tmp/.X11-unix:/tmp/.X11-unix \
-                -v /etc/machine-id:/etc/machine-id:ro \
-                -v ~/.emacs.d-docker/:/root/.emacs.d \
-                -v $(pwd)/dotspacemacs.el:/root/.spacemacs \
-                -v $(pwd)/demo-projects/:/Projects \
-                -e DISPLAY=$DISPLAY \
-                -e TZ=UA \
-                yyoncho/lsp-emacs-docker emacs
-       #+end_src
-**** Vanilla
-***** Run
-      #+begin_src bash
-        docker run -ti --rm -v $('pwd'):/mnt/workspace \
-               -v /etc/localtime:/etc/localtime:ro \
-               -v ~/.gnupg:${UHOME}/.gnupg \
-               -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-               -v /tmp/.X11-unix:/tmp/.X11-unix \
-               -v /etc/machine-id:/etc/machine-id:ro \
-               -v $(pwd)/demo-projects/:/Projects \
-               -v $(pwd)/emacs.d/:/root/.emacs.d \
-               -e DISPLAY=$DISPLAY \
-               -e TZ=UA \
-               yyoncho/lsp-emacs-docker emacs
-      #+end_src
-** docker Language Server running over local sources (only Linux/MacOS)
-   In this mode, =lsp-mode= runs the =Language Server= in =docker= container over local sources.
+   There are 2 supported containers:
+   - [[#emacslsp/lsp-docker-langservers][emacslsp/lsp-docker-langservers]]
+   - [[#emacslsp/lsp-docker-full][emacslsp/lsp-docker-full]]
+
+** emacslsp/lsp-docker-langservers
+   This container is used by =lsp-docker= to run =Language Servers= for =lsp-mode= over local sources.
+   =You must pull the container before lsp-docker can use it=
 *** Configuration
-    - Clone repo.
-    #+begin_src bash
+    - Clone the repo
+      #+begin_src bash
       git clone https://github.com/emacs-lsp/lsp-docker
-    #+end_src
-    - add it to load path and register the docker clients(currently =pyls= and =rls= are supported, but adding other clients is trivial).
-    #+begin_src elisp
-    ;; Uncomment the next line if you are using this from source
-    ;; (add-to-list 'load-path "<path-to-lsp-docker-dir>")
-    (require 'lsp-docker)
-
-    (defvar lsp-docker-client-packages
-        '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
-	    lsp-terraform lsp-cpp))
-
-    (defvar lsp-docker-client-configs
-       (list
-       (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
-       (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
-       (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
-       (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
-       (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
-       (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-       (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
-       (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")
-       (list :server-id 'tfls :docker-server-id 'tfls-docker :server-command "terraform-lsp")))
-
-    (require 'lsp-docker)
-    (lsp-docker-init-clients
-      :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
-      :docker-image-id "yyoncho/lsp-emacs-docker"
-      :docker-container-name "lsp-container"
-      :client-packages lsp-docker-client-packages
-      :client-configs lsp-docker-client-configs
-      :priority 5)
-
-    #+end_src
+      #+end_src
+    - Pull the container
+      #+begin_src bash
+      docker pull emacslsp/lsp-docker-langservers
+      #+end_src
+    - Add repo to load path and register the docker clients in your =~/.emacs= file
+      #+begin_src elisp
+      ;; Uncomment the next line if you are using this from source
+      ;; (add-to-list 'load-path "<path-to-lsp-docker-dir>")
+      (require 'lsp-docker)
+  
+      (defvar lsp-docker-client-packages
+          '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
+  	    lsp-terraform lsp-cpp))
+  
+      (defvar lsp-docker-client-configs
+         (list
+         (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
+         (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
+         (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
+         (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
+         (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
+         (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
+         (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
+         (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")))
+  
+      (require 'lsp-docker)
+      (lsp-docker-init-clients
+        :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
+        :client-packages lsp-docker-client-packages
+        :client-configs lsp-docker-client-configs)
+      #+end_src
 *** How it works
     =lsp-mode= starts the image passed as =:docker-image-id= and mounts =:path-mappings= in the container. Then when the process is started =lsp-mode= translates the local paths to =docker= path and vice versa using the =:path-mappings= specified when calling =lsp-docker-init-default-clients=. You may use =lsp-enabled-clients= and =lsp-disabled-clients= to control what language server will be used to run for a particular project(refer to =lsp-mode= FAQ on how to configure .dir-locals).
+
+** emacslsp/lsp-docker-full Container
+    The container =emacslsp/lsp-docker-full= contains:
+    - The above language servers
+    - =Emacs28= compiled with native JSON support for better performance.
+*** Flags
+    | Flag            | Purpose                                | Default                                               |
+    |-----------------+----------------------------------------+-------------------------------------------------------|
+    | EMACS_D_VOLUME  | Emacs folder to use for =/root/.emacs= | Emacs: =$(pwd)/emacs.d= Spacemacs: =$(pwd)/spacemacs= |
+    | PROJECTS_VOLUME | Directory to mount at /Projects        | =$(pwd)/demo-projects/=                               |
+    | TZ              | Timezone to user in container          | Europe/Minsk                                          |
+    | DOCKER_FLAGS    | Any additional docker flags            | N/A                                                   |
+**** Emacs
+     - Run
+       #+begin_src bash
+       bash start-spacemacs.sh
+       #+end_src
+**** Spacemacs
+     - Clone =lsp-docker=.
+       #+begin_src bash
+       git clone https://github.com/emacs-lsp/lsp-docker
+       cd lsp-docker
+       #+end_src
+     - Clone spacemacs repo
+       #+begin_src bash
+       # Clone spacemacs develop
+       git clone -b develop https://github.com/syl20bnr/spacemacs spacemacs
+       #+end_src
+     - Run
+       #+begin_src bash
+       EMACS_D_VOLUME=/path/to/spacemacs bash start-spacemacs.sh
+       #+end_src
 ** docker over TRAMP (TBD)
    Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
 ** See also

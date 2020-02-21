@@ -44,5 +44,3 @@ RUN apt-get install -y npm \
 # Python
 RUN apt-get install -y python3-pip \
 	&& pip3 install 'python-language-server[all]'
-
-
