@@ -31,7 +31,6 @@
   (require 'yasnippet))
 
 (add-hook 'prog-mode-hook 'lsp-deferred)
-(add-hook 'vue-mode-hook 'lsp-deferred)
 
 (setq lsp-log-io t)
 (setq-default lsp-ui-sideline-show-hover t)
