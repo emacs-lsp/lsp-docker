@@ -58,6 +58,11 @@ Argument PATH the path to translate."
   "Used to prevent collision of container names.")
 
 (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
+  "Return the docker command to be executed on host.
+Argument DOCKER-CONTAINER-NAME name to use for container.
+Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
+Argument DOCKER-IMAGE-ID the docker container to run language servers with.
+Argument SERVER-COMMAND the language server command to run inside the container."
   (cl-incf lsp-docker-container-name-suffix)
   (split-string
    (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
@@ -71,8 +76,11 @@ Argument PATH the path to translate."
 		   server-command))
    " "))
 
-(defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
-  (split-string
+(defun lsp-docker-exec-in-container (docker-container-name server-command)
+  "Return command to exec into running container.
+Argument DOCKER-CONTAINER-NAME name of container to exec into.
+Argument SERVER-COMMAND the command to execute inside the running container."
+(split-string
    (format "docker exec -i %s %s" docker-container-name server-command)))
 
 (cl-defun lsp-docker-register-client (&key server-id
@@ -83,7 +91,7 @@ Argument PATH the path to translate."
                                            priority
                                            server-command
                                            launch-server-cmd-fn)
-
+  "Registers docker clients with lsp"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
         (setf (lsp--client-server-id client) docker-server-id
@@ -111,7 +119,7 @@ Argument PATH the path to translate."
 (defvar lsp-docker-default-client-packages
   '(lsp-bash lsp-clients lsp-cpp lsp-css lsp-go
     lsp-html lsp-pyls lsp-typescript)
-  "List of client packages to load.")
+  "Default list of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
   (list
@@ -123,7 +131,7 @@ Argument PATH the path to translate."
    (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
    (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
    (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio"))
-  "List of client configuration.")
+  "Default list of client configurations.")
 
 (cl-defun lsp-docker-init-clients (&key
 					path-mappings
@@ -132,6 +140,7 @@ Argument PATH the path to translate."
 					(priority 10)
 					(client-packages lsp-docker-default-client-packages)
 					(client-configs lsp-docker-default-client-configs))
+  "Loads the required client packages and registers the required clients to run with docker."
   (seq-do (lambda (package) (require package nil t)) client-packages)
   (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
 	    (lsp-docker-register-client
