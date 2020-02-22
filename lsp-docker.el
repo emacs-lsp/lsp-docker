@@ -53,25 +53,27 @@ Argument PATH the path to translate."
        (s-replace local remote path)
      (user-error "The path %s is not under path mappings" path))))
 
-(let ((lsp-docker-name-suffix 0))
-  (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
-      (cl-incf lsp-docker-name-suffix)
-      (split-string
-       (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
-		       docker-container-name
-		       lsp-docker-name-suffix
-		       (->> path-mappings
-			    (-map (-lambda ((path . docker-path))
-				    (format "-v %s:%s" path docker-path)))
-			    (s-join " "))
-		       docker-image-id
-		       server-command))
-       " "))
 
-  (defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
-      (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
-      (split-string
-       (format "docker exec -i %s %s" docker-container-name server-command))))
+(defvar lsp-docker-container-name-suffix 0
+  "Used to prevent collision of container names.")
+
+(defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
+  (cl-incf lsp-docker-container-name-suffix)
+  (split-string
+   (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
+		   docker-container-name
+		   lsp-docker-container-name-suffix
+		   (->> path-mappings
+			(-map (-lambda ((path . docker-path))
+				(format "-v %s:%s" path docker-path)))
+			(s-join " "))
+		   docker-image-id
+		   server-command))
+   " "))
+
+(defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
+  (split-string
+   (format "docker exec -i %s %s" docker-container-name server-command)))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
@@ -132,7 +134,6 @@ Argument PATH the path to translate."
 					(client-configs lsp-docker-default-client-configs))
   (seq-do (lambda (package) (require package nil t)) client-packages)
   (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
-	    (message server-command)
 	    (lsp-docker-register-client
 	     :server-id server-id
 	     :priority priority
