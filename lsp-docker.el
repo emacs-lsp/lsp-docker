@@ -53,25 +53,35 @@ Argument PATH the path to translate."
        (s-replace local remote path)
      (user-error "The path %s is not under path mappings" path))))
 
-(let ((lsp-docker-name-suffix 0))
-  (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
-      (cl-incf lsp-docker-name-suffix)
-      (split-string
-       (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
-		       docker-container-name
-		       lsp-docker-name-suffix
-		       (->> path-mappings
-			    (-map (-lambda ((path . docker-path))
-				    (format "-v %s:%s" path docker-path)))
-			    (s-join " "))
-		       docker-image-id
-		       server-command))
-       " "))
 
-  (defun lsp-docker-exec-in-container (docker-container-name path-mappings docker-image-id server-command)
-      (setq lsp-docker-name-suffix (+ 1 lsp-docker-name-suffix))
-      (split-string
-       (format "docker exec -i %s %s" docker-container-name server-command))))
+(defvar lsp-docker-container-name-suffix 0
+  "Used to prevent collision of container names.")
+
+(defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
+  "Return the docker command to be executed on host.
+Argument DOCKER-CONTAINER-NAME name to use for container.
+Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
+Argument DOCKER-IMAGE-ID the docker container to run language servers with.
+Argument SERVER-COMMAND the language server command to run inside the container."
+  (cl-incf lsp-docker-container-name-suffix)
+  (split-string
+   (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
+		   docker-container-name
+		   lsp-docker-container-name-suffix
+		   (->> path-mappings
+			(-map (-lambda ((path . docker-path))
+				(format "-v %s:%s" path docker-path)))
+			(s-join " "))
+		   docker-image-id
+		   server-command))
+   " "))
+
+(defun lsp-docker-exec-in-container (docker-container-name server-command)
+  "Return command to exec into running container.
+Argument DOCKER-CONTAINER-NAME name of container to exec into.
+Argument SERVER-COMMAND the command to execute inside the running container."
+(split-string
+   (format "docker exec -i %s %s" docker-container-name server-command)))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
@@ -81,7 +91,7 @@ Argument PATH the path to translate."
                                            priority
                                            server-command
                                            launch-server-cmd-fn)
-
+  "Registers docker clients with lsp"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
         (setf (lsp--client-server-id client) docker-server-id
@@ -107,8 +117,9 @@ Argument PATH the path to translate."
     (user-error "No such client %s" server-id)))
 
 (defvar lsp-docker-default-client-packages
-  '(lsp-rust lsp-go lsp-pyls lsp-clients)
-  "List of client packages to load.")
+  '(lsp-bash lsp-clients lsp-cpp lsp-css lsp-go
+    lsp-html lsp-pyls lsp-typescript)
+  "Default list of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
   (list
@@ -120,7 +131,7 @@ Argument PATH the path to translate."
    (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
    (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
    (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio"))
-  "List of client configuration.")
+  "Default list of client configurations.")
 
 (cl-defun lsp-docker-init-clients (&key
 					path-mappings
@@ -129,20 +140,18 @@ Argument PATH the path to translate."
 					(priority 10)
 					(client-packages lsp-docker-default-client-packages)
 					(client-configs lsp-docker-default-client-configs))
+  "Loads the required client packages and registers the required clients to run with docker."
   (seq-do (lambda (package) (require package nil t)) client-packages)
-  (seq-do (lambda (clientInfo)
-	    (cl-destructuring-bind (&key server-id docker-server-id server-command)
-		clientInfo
-	      (message server-command)
-	      (lsp-docker-register-client
-	       :server-id server-id
-	       :priority priority
-	       :docker-server-id docker-server-id
-	       :docker-image-id docker-image-id
-	       :docker-container-name docker-container-name
-	       :server-command server-command
-	       :path-mappings path-mappings
-	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
+	    (lsp-docker-register-client
+	     :server-id server-id
+	     :priority priority
+	     :docker-server-id docker-server-id
+	     :docker-image-id docker-image-id
+	     :docker-container-name docker-container-name
+	     :server-command server-command
+	     :path-mappings path-mappings
+	     :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 	  client-configs))
 
 (provide 'lsp-docker)
