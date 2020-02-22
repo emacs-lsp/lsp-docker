@@ -107,7 +107,8 @@ Argument PATH the path to translate."
     (user-error "No such client %s" server-id)))
 
 (defvar lsp-docker-default-client-packages
-  '(lsp-rust lsp-go lsp-pyls lsp-clients)
+  '(lsp-bash lsp-clients lsp-cpp lsp-css lsp-go
+    lsp-html lsp-pyls lsp-typescript)
   "List of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
@@ -130,19 +131,17 @@ Argument PATH the path to translate."
 					(client-packages lsp-docker-default-client-packages)
 					(client-configs lsp-docker-default-client-configs))
   (seq-do (lambda (package) (require package nil t)) client-packages)
-  (seq-do (lambda (clientInfo)
-	    (cl-destructuring-bind (&key server-id docker-server-id server-command)
-		clientInfo
-	      (message server-command)
-	      (lsp-docker-register-client
-	       :server-id server-id
-	       :priority priority
-	       :docker-server-id docker-server-id
-	       :docker-image-id docker-image-id
-	       :docker-container-name docker-container-name
-	       :server-command server-command
-	       :path-mappings path-mappings
-	       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
+	    (message server-command)
+	    (lsp-docker-register-client
+	     :server-id server-id
+	     :priority priority
+	     :docker-server-id docker-server-id
+	     :docker-image-id docker-image-id
+	     :docker-container-name docker-container-name
+	     :server-command server-command
+	     :path-mappings path-mappings
+	     :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 	  client-configs))
 
 (provide 'lsp-docker)
