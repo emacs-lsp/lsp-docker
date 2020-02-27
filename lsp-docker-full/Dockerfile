@@ -9,5 +9,4 @@ RUN apt-get update \
 	&& ./configure --with-modules --with-json \
 	&& make -j4 && make install
 
-
 COPY .emacs /root/.emacs
