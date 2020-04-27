@@ -16,7 +16,7 @@
   - [[#docker-over-tramp-tbd][Docker over TRAMP (TBD)]]
   - [[#see-also][See also]]
   - [[#maintainers][Maintainers]]
-    
+
 ** Preconfigured language servers
    =emacslsp/lsp-docker-langservers= has the following content:
    - Language servers:
@@ -52,11 +52,11 @@
       ;; Uncomment the next line if you are using this from source
       ;; (add-to-list 'load-path "<path-to-lsp-docker-dir>")
       (require 'lsp-docker)
-  
+
       (defvar lsp-docker-client-packages
           '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
-  	    lsp-terraform lsp-cpp))
-  
+            lsp-terraform lsp-cpp))
+
       (defvar lsp-docker-client-configs
          (list
          (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
@@ -67,7 +67,7 @@
          (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
          (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
          (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")))
-  
+
       (require 'lsp-docker)
       (lsp-docker-init-clients
         :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
@@ -96,7 +96,7 @@
        #+end_src
      - Run
        #+begin_src bash
-       bash start-spacemacs.sh
+       bash start-emacs.sh
        #+end_src
 **** Spacemacs
      - Clone =lsp-docker=.
