@@ -24,4 +24,6 @@ docker run -ti --rm -v $('pwd'):/mnt/workspace \
        $DOCKER_FLAGS \
        -e DISPLAY=$DISPLAY \
        -e TZ=$TIME_ZONE \
+       -e TERM=${TERM:-screen-256color} \
+       --detach-keys=${DOCKER_DETACH_KEYS:-ctrl-^,ctrl-q} \
        emacslsp/lsp-docker-full:latest emacs
