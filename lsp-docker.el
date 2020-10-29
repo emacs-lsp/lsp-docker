@@ -116,21 +116,16 @@ Argument SERVER-COMMAND the command to execute inside the running container."
         (lsp-register-client client))
     (user-error "No such client %s" server-id)))
 
-(defvar lsp-docker-default-client-packages
-  '(lsp-bash lsp-clients lsp-cpp lsp-css lsp-go
-    lsp-html lsp-pyls lsp-typescript)
-  "Default list of client packages to load.")
-
 (defvar lsp-docker-default-client-configs
   (list
-   (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
-   (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
-   (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
-   (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
-   (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
-   (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
-   (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-   (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio"))
+   (list :client-package 'lsp-bash :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
+   (list :client-package 'lsp-clangd :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
+   (list :client-package 'lsp-css :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
+   (list :client-package 'lsp-dockerfile :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
+   (list :client-package 'lsp-go :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
+   (list :client-package 'lsp-html :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
+   (list :client-package 'lsp-pyls :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
+   (list :client-package 'lsp-javascript :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio"))
   "Default list of client configurations.")
 
 (cl-defun lsp-docker-init-clients (&key
@@ -138,11 +133,10 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 					(docker-image-id "emacslsp/lsp-docker-langservers")
 					(docker-container-name "lsp-container")
 					(priority 10)
-					(client-packages lsp-docker-default-client-packages)
 					(client-configs lsp-docker-default-client-configs))
   "Loads the required client packages and registers the required clients to run with docker."
-  (seq-do (lambda (package) (require package nil t)) client-packages)
-  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
+  (seq-do (-lambda ((&plist :client-package :server-id :docker-server-id :server-command))
+	    (require client-package nil t)
 	    (lsp-docker-register-client
 	     :server-id server-id
 	     :priority priority
