@@ -117,8 +117,14 @@ Argument SERVER-COMMAND the command to execute inside the running container."
     (user-error "No such client %s" server-id)))
 
 (defvar lsp-docker-default-client-packages
-  '(lsp-bash lsp-clients lsp-cpp lsp-css lsp-go
-    lsp-html lsp-pyls lsp-typescript)
+  '(lsp-bash
+    lsp-clangd
+    lsp-css
+    lsp-dockerfile
+    lsp-go
+    lsp-html
+    lsp-javascript
+    lsp-pyls)
   "Default list of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
