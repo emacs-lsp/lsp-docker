@@ -30,6 +30,12 @@
 (require 'lsp-mode)
 (require 'dash)
 
+(defun lsp-docker--ensure-path-trailing-slash (path)
+  "Ensures the incoming path has a trailing slash.
+Argument PATH path the requires trailing space"
+  (if (s-suffix? "/" path) path
+    (concat path "/")))
+
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
@@ -156,7 +162,10 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 	     :docker-image-id docker-image-id
 	     :docker-container-name docker-container-name
 	     :server-command server-command
-	     :path-mappings path-mappings
+	     :path-mappings (->> path-mappings
+				 (-map (-lambda ((local-path . docker-path))
+					 (cons (lsp-docker--ensure-path-trailing-slash local-path)
+					       (lsp-docker--ensure-path-trailing-slash docker-path)))))
 	     :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 	  client-configs))
 
