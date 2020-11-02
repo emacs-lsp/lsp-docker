@@ -156,10 +156,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 	     :docker-image-id docker-image-id
 	     :docker-container-name docker-container-name
 	     :server-command server-command
-	     :path-mappings (->> path-mappings
-				 (-map (-lambda ((local-path . docker-path))
-					 (cons (file-name-as-directory local-path)
-					       (file-name-as-directory docker-path)))))
+	     :path-mappings path-mappings
 	     :launch-server-cmd-fn #'lsp-docker-launch-new-container))
 	  client-configs))
 
