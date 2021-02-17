@@ -57,6 +57,9 @@ Argument PATH the path to translate."
 (defvar lsp-docker-container-name-suffix 0
   "Used to prevent collision of container names.")
 
+(defvar lsp-docker-command "docker"
+  "The docker command to use.")
+
 (defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
   "Return the docker command to be executed on host.
 Argument DOCKER-CONTAINER-NAME name to use for container.
@@ -65,7 +68,8 @@ Argument DOCKER-IMAGE-ID the docker container to run language servers with.
 Argument SERVER-COMMAND the language server command to run inside the container."
   (cl-incf lsp-docker-container-name-suffix)
   (split-string
-   (--doto (format "docker run --name %s-%d --rm -i %s %s %s"
+   (--doto (format "%s run --name %s-%d --rm -i %s %s %s"
+		   lsp-docker-command
 		   docker-container-name
 		   lsp-docker-container-name-suffix
 		   (->> path-mappings
