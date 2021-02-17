@@ -69,7 +69,7 @@ Argument SERVER-COMMAND the language server command to run inside the container.
   (cl-incf lsp-docker-container-name-suffix)
   (split-string
    (--doto (format "%s run --name %s-%d --rm -i %s %s %s"
-                   lsp-docker-command
+		   lsp-docker-command
 		   docker-container-name
 		   lsp-docker-container-name-suffix
 		   (->> path-mappings
