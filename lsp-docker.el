@@ -152,17 +152,18 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 					(client-configs lsp-docker-default-client-configs))
   "Loads the required client packages and registers the required clients to run with docker."
   (seq-do (lambda (package) (require package nil t)) client-packages)
-  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
-	    (lsp-docker-register-client
-	     :server-id server-id
-	     :priority priority
-	     :docker-server-id docker-server-id
-	     :docker-image-id docker-image-id
-	     :docker-container-name docker-container-name
-	     :server-command server-command
-	     :path-mappings path-mappings
-	     :launch-server-cmd-fn #'lsp-docker-launch-new-container))
-	  client-configs))
+  (let ((default-docker-image-id docker-image-id))
+   (seq-do (-lambda ((&plist :server-id :docker-server-id :docker-image-id :server-command))
+       (lsp-docker-register-client
+        :server-id server-id
+        :priority priority
+        :docker-server-id docker-server-id
+        :docker-image-id (or docker-image-id default-docker-image-id)
+        :docker-container-name docker-container-name
+        :server-command server-command
+        :path-mappings path-mappings
+        :launch-server-cmd-fn #'lsp-docker-launch-new-container))
+     client-configs)))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
