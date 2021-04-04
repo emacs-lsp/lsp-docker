@@ -150,19 +150,68 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 					(priority 10)
 					(client-packages lsp-docker-default-client-packages)
 					(client-configs lsp-docker-default-client-configs))
-  "Loads the required client packages and registers the required clients to run with docker."
+  "Loads the required client packages and registers the required clients to run with docker.
+
+:path-mappings is an alist of local paths and their mountpoints
+in the docker container.
+Example: '((\"/path/to/projects\" . \"/projects\"))
+
+:docker-image-id is the identifier for the docker image to be
+used for all clients, as a string.
+
+:docker-container-name is the name to use for the container when
+it is started.
+
+:priority is the priority with which to register the docker
+clients with lsp.  (See the library ‘lsp-clients’ for details.)
+
+:client-packages is a list of libraries to load before registering the clients.
+
+:client-configs is a list of configurations for the various
+clients you wish to use with ‘lsp-docker’.  Each element takes
+the form
+'(:server-id 'example-ls
+  :docker-server-id 'examplels-docker
+  :docker-image-id \"examplenamespace/examplels-docker:x.y\"
+  :docker-container-name \"examplels-container\"
+  :server-command \"run_example_ls.sh\")
+where
+:server-id is the ID of the language server, as defined in the
+library ‘lsp-clients’.
+
+:docker-server-id is any arbitrary unique symbol used internally
+by ‘lsp’ to distinguish it from non-docker clients for the same
+server.
+
+:docker-image-id is an optional property to override this
+function's :docker-image-id argument for just this client.  If
+you specify this, you MUST also specify :docker-container-name.
+
+:docker-container-name is an optional property to override this
+function's :docker-container-name argument for just this client.
+This MUST be specified if :docker-image-id is specified, but is
+otherwise optional.
+
+:server-command is a string specifying the command to run inside
+the docker container to run the language server."
   (seq-do (lambda (package) (require package nil t)) client-packages)
-  (seq-do (-lambda ((&plist :server-id :docker-server-id :server-command))
-	    (lsp-docker-register-client
-	     :server-id server-id
-	     :priority priority
-	     :docker-server-id docker-server-id
-	     :docker-image-id docker-image-id
-	     :docker-container-name docker-container-name
-	     :server-command server-command
-	     :path-mappings path-mappings
-	     :launch-server-cmd-fn #'lsp-docker-launch-new-container))
-	  client-configs))
+  (let ((default-docker-image-id docker-image-id))
+    (seq-do (-lambda ((&plist :server-id :docker-server-id :docker-image-id :docker-container-name :server-command))
+        (when (and docker-image-id (not docker-container-name))
+          (user-error "Invalid client definition for server ID %S. You must specify a container name when specifying an image ID."
+                 server-id))
+        (lsp-docker-register-client
+         :server-id server-id
+         :priority priority
+         :docker-server-id docker-server-id
+         :docker-image-id (or docker-image-id default-docker-image-id)
+         :docker-container-name (if docker-image-id
+                                    docker-container-name
+                                  default-docker-container-name)
+         :server-command server-command
+         :path-mappings path-mappings
+         :launch-server-cmd-fn #'lsp-docker-launch-new-container))
+      client-configs)))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
