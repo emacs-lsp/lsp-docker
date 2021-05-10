@@ -6,13 +6,13 @@
 * Table of Contents                                       :TOC_4_gh:noexport:
   - [[#preconfigured-language-servers][Preconfigured language servers]]
   - [[#usage][Usage]]
-    - [[#emacslsplsp-docker-langservers][emacslsp/lsp-docker-langservers]]
-      - [[#configuration][Configuration]]
-      - [[#how-it-works][How it works]]
-    - [[#emacslsplsp-docker-full][emacslsp/lsp-docker-full]]
-      - [[#flags][Flags]]
-        - [[#emacs][Emacs]]
-        - [[#spacemacs][Spacemacs]]
+  - [[#emacslsplsp-docker-langservers][emacslsp/lsp-docker-langservers]]
+    - [[#configuration][Configuration]]
+    - [[#how-it-works][How it works]]
+  - [[#emacslsplsp-docker-full][emacslsp/lsp-docker-full]]
+    - [[#flags][Flags]]
+      - [[#emacs][Emacs]]
+      - [[#spacemacs][Spacemacs]]
   - [[#docker-over-tramp-tbd][Docker over TRAMP (TBD)]]
   - [[#see-also][See also]]
   - [[#maintainers][Maintainers]]
@@ -31,7 +31,7 @@
      | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]        |
      | Python                | [[https://github.com/palantir/python-language-server][pyls]]                              |
 ** Usage
-   There are 2 supported containers:
+   There are 2 containers provided by =lsp-docker=:
    - [[#emacslsplsp-docker-langservers][emacslsp/lsp-docker-langservers]]
    - [[#emacslsplsp-docker-full][emacslsp/lsp-docker-full]]
 
