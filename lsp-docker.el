@@ -96,7 +96,14 @@ Argument SERVER-COMMAND the command to execute inside the running container."
   "Registers docker clients with lsp"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
-        (let ((docker-container-name-full (format "%s-%d" docker-container-name (cl-incf lsp-docker-container-name-suffix))))
+        (let ((docker-container-name-full
+	       (if lsp-docker-container-name-suffix
+		   (format "%s-%d"
+			   docker-container-name
+			   (if (numberp lsp-docker-container-name-suffix)
+			       (cl-incf lsp-docker-container-name-suffix)
+			     lsp-docker-container-name-suffix))
+		 docker-container-name)))
           (setf (lsp--client-server-id client) docker-server-id
                 (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
                                                             path-mappings
