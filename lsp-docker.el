@@ -66,12 +66,10 @@ Argument DOCKER-CONTAINER-NAME name to use for container.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
 Argument DOCKER-IMAGE-ID the docker container to run language servers with.
 Argument SERVER-COMMAND the language server command to run inside the container."
-  (cl-incf lsp-docker-container-name-suffix)
   (split-string
-   (--doto (format "%s run --name %s-%d --rm -i %s %s %s"
+   (--doto (format "%s run --name %s --rm -i %s %s %s"
 		   lsp-docker-command
 		   docker-container-name
-		   lsp-docker-container-name-suffix
 		   (->> path-mappings
 			(-map (-lambda ((path . docker-path))
 				(format "-v %s:%s" path docker-path)))
@@ -98,25 +96,33 @@ Argument SERVER-COMMAND the command to execute inside the running container."
   "Registers docker clients with lsp"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
-        (setf (lsp--client-server-id client) docker-server-id
-              (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
-                                                          path-mappings
-                                                          docker-container-name)
-              (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
-              (lsp--client-new-connection client) (plist-put
-                                                   (lsp-stdio-connection
-                                                    (lambda ()
-                                                      (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                                               docker-container-name
-                                                               path-mappings
-                                                               docker-image-id
-                                                               server-command)))
-                                                   :test? (lambda (&rest _)
-                                                            (-any?
-                                                             (-lambda ((dir))
-                                                               (f-ancestor-of? dir (buffer-file-name)))
-                                                             path-mappings)))
-              (lsp--client-priority client) (or priority (lsp--client-priority client)))
+        (let ((docker-container-name-full
+	       (if lsp-docker-container-name-suffix
+		   (format "%s-%d"
+			   docker-container-name
+			   (if (numberp lsp-docker-container-name-suffix)
+			       (cl-incf lsp-docker-container-name-suffix)
+			     lsp-docker-container-name-suffix))
+		 docker-container-name)))
+          (setf (lsp--client-server-id client) docker-server-id
+                (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
+                                                            path-mappings
+                                                            docker-container-name-full)
+                (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
+                (lsp--client-new-connection client) (plist-put
+                                                     (lsp-stdio-connection
+                                                      (lambda ()
+                                                        (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                                                 docker-container-name-full
+                                                                 path-mappings
+                                                                 docker-image-id
+                                                                 server-command)))
+                                                     :test? (lambda (&rest _)
+                                                              (-any?
+                                                               (-lambda ((dir))
+                                                                 (f-ancestor-of? dir (buffer-file-name)))
+                                                               path-mappings)))
+                (lsp--client-priority client) (or priority (lsp--client-priority client))))
         (lsp-register-client client))
     (user-error "No such client %s" server-id)))
 
@@ -195,7 +201,8 @@ otherwise optional.
 :server-command is a string specifying the command to run inside
 the docker container to run the language server."
   (seq-do (lambda (package) (require package nil t)) client-packages)
-  (let ((default-docker-image-id docker-image-id))
+  (let ((default-docker-image-id docker-image-id)
+	(default-docker-container-name docker-container-name))
     (seq-do (-lambda ((&plist :server-id :docker-server-id :docker-image-id :docker-container-name :server-command))
         (when (and docker-image-id (not docker-container-name))
           (user-error "Invalid client definition for server ID %S. You must specify a container name when specifying an image ID."
