@@ -25,7 +25,8 @@ RUN apt-get update \
 
 # C-Family
 COPY --from=ccls /ccls /ccls
-RUN ln -s /ccls/Release/ccls /usr/bin/ccls
+RUN ln -s /ccls/Release/ccls /usr/bin/ccls \
+	&& ln -s /ccls/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/clangd /usr/bin/clangd
 
 # Go
 COPY --from=go /go /go
