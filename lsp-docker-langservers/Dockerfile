@@ -34,7 +34,16 @@ ENV PATH "${PATH}:/go/bin:/root/go/bin"
 RUN /go/bin/go get -u golang.org/x/tools/gopls
 
 # NPM installed language servers
-RUN apt-get install -y npm \
+# https://github.com/nodesource/distributions/blob/master/README.md
+RUN apt-get update \
+	&& apt-get upgrade -y  \
+	&& apt-get install -y wget gnupg2 \
+  && wget --quiet -O - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
+  && VERSION="node_8.x" \
+  && DISTRO="bionic" \
+  && echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" | tee /etc/apt/sources.list.d/nodesource.list \
+  && echo "deb-src https://deb.nodesource.com/$VERSION $DISTRO main" | tee -a /etc/apt/sources.list.d/nodesource.list \
+  && apt-get update -y && apt-get -y install nodejs \
 	&& npm i -g \
 	bash-language-server \
 	vscode-css-languageserver-bin \
