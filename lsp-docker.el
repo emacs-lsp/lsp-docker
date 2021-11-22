@@ -324,11 +324,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
            (registered-project-root ,project-dir))
        (f-same? current-project-root registered-project-root))))
 
-(defun test-create-lsp-docker-activation-function-by-project-dir ()
-  (interactive)
-  (create-lsp-docker-activation-function-by-project-dir))
-
-
 (defun lsp-docker-generate-docker-server-id (config project-root)
   "Generate the docker-server-id from the project config"
   (let ((lsp-docker-original-server-id (symbol-name (lsp-docker-get-server-id config)))
