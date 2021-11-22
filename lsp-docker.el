@@ -316,7 +316,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
            docker-container-name)
    " "))
 
-(defmacro create-lsp-docker-activation-function-by-project-dir (project-dir)
+(defmacro lsp-docker-create-activation-function-by-project-dir (project-dir)
   `(lambda (&rest unused)
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir))
@@ -354,7 +354,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :docker-image-id server-image-name
                                       :docker-container-name server-container-name
                                       :docker-container-name-suffix nil
-                                      :activation-fn (create-lsp-docker-activation-function-by-project-dir (lsp-workspace-root))
+                                      :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
                                       :priority lsp-docker-default-priority
                                       :server-command server-launch-command
                                       :launch-server-cmd-fn #'lsp-docker-launch-new-container))
@@ -365,7 +365,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                           :docker-image-id nil
                                           :docker-container-name server-container-name
                                           :docker-container-name-suffix nil
-                                          :activation-fn (create-lsp-docker-activation-function-by-project-dir (lsp-workspace-root))
+                                          :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
                                           :priority lsp-docker-default-priority
                                           :server-command server-launch-command
                                           :launch-server-cmd-fn #'lsp-docker-launch-existing-container))))))
