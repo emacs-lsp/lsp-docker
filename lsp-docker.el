@@ -318,7 +318,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (defmacro create-lsp-docker-activation-function-by-project-dir (project-dir)
   `(lambda (&rest unused)
-     (interactive)
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir))
        (f-same? current-project-root registered-project-root))))
