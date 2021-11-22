@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-lsp/lsp-docker
 ;; Keywords: languages langserver
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "25.1") (dash "2.14.1") (lsp-mode "6.2.1") (f "0.20.0") (projectile "2.3.0") (yaml "0.2.0") (ht "2.0"))
+;; Package-Requires: ((emacs "25.1") (dash "2.14.1") (lsp-mode "6.2.1") (f "0.20.0") (yaml "0.2.0") (ht "2.0"))
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@
 (require 'lsp-mode)
 (require 'dash)
 (require 'f)
-(require 'projectile)
 (require 'yaml)
 (require 'ht))
 
@@ -229,9 +228,9 @@ the docker container to run the language server."
   (let ((config (yaml-parse-string (f-read project-config-file-path))))
     (gethash 'lsp config)))
 
-(defun lsp-docker-get-config-from-projectile ()
-  "Get the LSP configuration based on a project-local configuration (using projectile)"
-  (let* ((normalized-project-root (file-name-as-directory (projectile-project-root)))
+(defun lsp-docker-get-config-from-lsp ()
+  "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
+  (let* ((normalized-project-root (file-name-as-directory (lsp-workspace-root)))
          (project-config-file-path (if (f-exists? (concat normalized-project-root ".lsp-docker.yml"))
                                        (concat normalized-project-root ".lsp-docker.yml")
                                      ((concat normalized-project-root ".lsp-docker.yaml")))))
@@ -304,8 +303,8 @@ the docker container to run the language server."
 
 (defun lsp-docker-check-path-mappings (path-mappings)
   "Verify that specified path mappings are all inside the project directory"
-  (--all? (or (f-descendant-of? (f-canonical (car it)) (f-canonical (projectile-project-root)))
-              (f-same? (f-canonical (car it)) (f-canonical (projectile-project-root))))
+  (--all? (or (f-descendant-of? (f-canonical (car it)) (f-canonical (lsp-workspace-root)))
+              (f-same? (f-canonical (car it)) (f-canonical (lsp-workspace-root))))
           path-mappings))
 
 (defun lsp-docker-launch-existing-container (docker-container-name &rest _unused)
@@ -320,7 +319,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 (defmacro create-lsp-docker-activation-function-by-project-dir (project-dir)
   `(lambda (&rest unused)
      (interactive)
-     (let ((current-project-root (projectile-project-root))
+     (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir))
        (f-same? current-project-root registered-project-root))))
 
@@ -333,15 +332,15 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 (defun lsp-dockerize-current-project ()
   "Use LSP mode in a container for the current project"
   (interactive)
-  (if (projectile-project-p)
+  (if (lsp-workspace-root)
       (let* (
-             (lsp-docker-config (lsp-docker-get-config-from-projectile))
+             (lsp-docker-config (lsp-docker-get-config-from-lsp))
              (lsp-docker-server-type-subtype (lsp-docker-get-server-type-subtype lsp-docker-config))
              (lsp-docker-server-container-name (lsp-docker-get-server-container-name lsp-docker-config))
              (lsp-docker-server-image-name (lsp-docker-get-server-image-name lsp-docker-config))
              (lsp-docker-path-mappings (lsp-docker-get-path-mappings lsp-docker-config))
              (lsp-docker-regular-server-id (lsp-docker-get-server-id lsp-docker-config))
-             (lsp-docker-server-id (lsp-docker-generate-docker-server-id lsp-docker-config (projectile-project-root)))
+             (lsp-docker-server-id (lsp-docker-generate-docker-server-id lsp-docker-config (lsp-workspace-root)))
              (lsp-docker-server-launch-command (lsp-docker-get-launch-command lsp-docker-config)))
         (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes lsp-docker-server-type-subtype)
                  (lsp-docker-check-path-mappings lsp-docker-path-mappings))
@@ -356,7 +355,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :docker-image-id lsp-docker-server-image-name
                                       :docker-container-name lsp-docker-server-container-name
                                       :docker-container-name-suffix nil
-                                      :activation-fn (create-lsp-docker-activation-function-by-project-dir (projectile-project-root))
+                                      :activation-fn (create-lsp-docker-activation-function-by-project-dir (lsp-workspace-root))
                                       :priority lsp-docker-default-priority
                                       :server-command lsp-docker-server-launch-command
                                       :launch-server-cmd-fn #'lsp-docker-launch-new-container))
@@ -367,7 +366,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                           :docker-image-id nil
                                           :docker-container-name lsp-docker-server-container-name
                                           :docker-container-name-suffix nil
-                                          :activation-fn (create-lsp-docker-activation-function-by-project-dir (projectile-project-root))
+                                          :activation-fn (create-lsp-docker-activation-function-by-project-dir (lsp-workspace-root))
                                           :priority lsp-docker-default-priority
                                           :server-command lsp-docker-server-launch-command
                                           :launch-server-cmd-fn #'lsp-docker-launch-existing-container))))))
