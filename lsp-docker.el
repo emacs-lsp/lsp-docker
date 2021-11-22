@@ -324,50 +324,50 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (defun lsp-docker-generate-docker-server-id (config project-root)
   "Generate the docker-server-id from the project config"
-  (let ((lsp-docker-original-server-id (symbol-name (lsp-docker-get-server-id config)))
-         (lsp-docker-project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
-    (intern (s-join "-" (list lsp-docker-project-path-server-id-part lsp-docker-original-server-id "docker")))))
+  (let ((original-server-id (symbol-name (lsp-docker-get-server-id config)))
+         (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
+    (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
 (defun lsp-dockerize-current-project ()
   "Use LSP mode in a container for the current project"
   (interactive)
   (if (lsp-workspace-root)
       (let* (
-             (lsp-docker-config (lsp-docker-get-config-from-lsp))
-             (lsp-docker-server-type-subtype (lsp-docker-get-server-type-subtype lsp-docker-config))
-             (lsp-docker-server-container-name (lsp-docker-get-server-container-name lsp-docker-config))
-             (lsp-docker-server-image-name (lsp-docker-get-server-image-name lsp-docker-config))
-             (lsp-docker-path-mappings (lsp-docker-get-path-mappings lsp-docker-config))
-             (lsp-docker-regular-server-id (lsp-docker-get-server-id lsp-docker-config))
-             (lsp-docker-server-id (lsp-docker-generate-docker-server-id lsp-docker-config (lsp-workspace-root)))
-             (lsp-docker-server-launch-command (lsp-docker-get-launch-command lsp-docker-config)))
-        (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes lsp-docker-server-type-subtype)
-                 (lsp-docker-check-path-mappings lsp-docker-path-mappings))
-            (let ((container-type (car lsp-docker-server-type-subtype))
-                    (container-subtype (cdr lsp-docker-server-type-subtype)))
+             (config (lsp-docker-get-config-from-lsp))
+             (server-type-subtype (lsp-docker-get-server-type-subtype config))
+             (server-container-name (lsp-docker-get-server-container-name config))
+             (server-image-name (lsp-docker-get-server-image-name config))
+             (path-mappings (lsp-docker-get-path-mappings config))
+             (regular-server-id (lsp-docker-get-server-id config))
+             (server-id (lsp-docker-generate-docker-server-id config (lsp-workspace-root)))
+             (server-launch-command (lsp-docker-get-launch-command config)))
+        (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes server-type-subtype)
+                 (lsp-docker-check-path-mappings path-mappings))
+            (let ((container-type (car server-type-subtype))
+                    (container-subtype (cdr server-type-subtype)))
                 (pcase container-type
                   ('docker (pcase container-subtype
                              ('image (lsp-docker-register-client-with-activation-fn
-                                      :server-id lsp-docker-regular-server-id
-                                      :docker-server-id lsp-docker-server-id
-                                      :path-mappings lsp-docker-path-mappings
-                                      :docker-image-id lsp-docker-server-image-name
-                                      :docker-container-name lsp-docker-server-container-name
+                                      :server-id regular-server-id
+                                      :docker-server-id server-id
+                                      :path-mappings path-mappings
+                                      :docker-image-id server-image-name
+                                      :docker-container-name server-container-name
                                       :docker-container-name-suffix nil
                                       :activation-fn (create-lsp-docker-activation-function-by-project-dir (lsp-workspace-root))
                                       :priority lsp-docker-default-priority
-                                      :server-command lsp-docker-server-launch-command
+                                      :server-command server-launch-command
                                       :launch-server-cmd-fn #'lsp-docker-launch-new-container))
                              ('container (lsp-docker-register-client-with-activation-fn
-                                          :server-id lsp-docker-regular-server-id
-                                          :docker-server-id lsp-docker-server-id
-                                          :path-mappings lsp-docker-path-mappings
+                                          :server-id regular-server-id
+                                          :docker-server-id server-id
+                                          :path-mappings path-mappings
                                           :docker-image-id nil
-                                          :docker-container-name lsp-docker-server-container-name
+                                          :docker-container-name server-container-name
                                           :docker-container-name-suffix nil
                                           :activation-fn (create-lsp-docker-activation-function-by-project-dir (lsp-workspace-root))
                                           :priority lsp-docker-default-priority
-                                          :server-command lsp-docker-server-launch-command
+                                          :server-command server-launch-command
                                           :launch-server-cmd-fn #'lsp-docker-launch-existing-container))))))
           (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
     (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
