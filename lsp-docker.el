@@ -344,7 +344,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
         (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes server-type-subtype)
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
-                    (container-subtype (cdr server-type-subtype)))
+                  (container-subtype (cdr server-type-subtype)))
                 (pcase container-type
                   ('docker (pcase container-subtype
                              ('image (lsp-docker-register-client-with-activation-fn
