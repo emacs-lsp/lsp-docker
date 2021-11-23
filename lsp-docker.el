@@ -344,8 +344,49 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
-(defun lsp-dockerize-current-project ()
-  "Use LSP mode in a container for the current project"
+(cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
+                                                              docker-server-id
+                                                              path-mappings
+                                                              docker-image-id
+                                                              docker-container-name
+                                                              (docker-container-name-suffix lsp-docker-container-name-suffix)
+                                                              activation-fn
+                                                              priority
+                                                              server-command
+                                                              launch-server-cmd-fn)
+  "Registers docker clients with lsp (by persisting configuration)"
+  (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
+      (let ((docker-container-name-full
+             (if docker-container-name-suffix
+                 (format "%s-%d"
+                         docker-container-name
+                         (if (numberp docker-container-name-suffix)
+                             (cl-incf docker-container-name-suffix)
+                           docker-container-name-suffix))
+               docker-container-name)))
+        (setf (lsp--client-server-id client) docker-server-id
+              (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
+                                                          path-mappings
+                                                          docker-container-name-full)
+              (lsp--client-activation-fn client) activation-fn
+              (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
+              (lsp--client-new-connection client) (plist-put
+                                                   (lsp-stdio-connection
+                                                    (lambda ()
+                                                      (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                                               docker-container-name-full
+                                                               path-mappings
+                                                               docker-image-id
+                                                               server-command)))
+                                                   :test? (lambda (&rest _)
+                                                            t))
+              (lsp--client-priority client) (or priority (lsp--client-priority client)))
+        (lsp-register-client client)
+        (message "Registered a language server with id: %s and container name: %s" docker-server-id docker-container-name-full))
+    (user-error "No such client %s" server-id)))
+
+(defun lsp-docker-register ()
+  "Register a server to use LSP mode in a container for the current project"
   (interactive)
   (if (lsp-workspace-root)
       (let* (
@@ -388,46 +429,11 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
     (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
 
-(cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
-                                                              docker-server-id
-                                                              path-mappings
-                                                              docker-image-id
-                                                              docker-container-name
-                                                              (docker-container-name-suffix lsp-docker-container-name-suffix)
-                                                              activation-fn
-                                                              priority
-                                                              server-command
-                                                              launch-server-cmd-fn)
-  "Registers docker clients with lsp (by persisting configuration)"
-  (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
-      (let ((docker-container-name-full
-             (if docker-container-name-suffix
-                 (format "%s-%d"
-                         docker-container-name
-                         (if (numberp docker-container-name-suffix)
-                             (cl-incf docker-container-name-suffix)
-                           docker-container-name-suffix))
-               docker-container-name)))
-        (setf (lsp--client-server-id client) docker-server-id
-              (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
-                                                          path-mappings
-                                                          docker-container-name-full)
-              (lsp--client-activation-fn client) activation-fn
-              (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
-              (lsp--client-new-connection client) (plist-put
-                                                   (lsp-stdio-connection
-                                                    (lambda ()
-                                                      (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                                               docker-container-name-full
-                                                               path-mappings
-                                                               docker-image-id
-                                                               server-command)))
-                                                   :test? (lambda (&rest _)
-                                                            t))
-              (lsp--client-priority client) (or priority (lsp--client-priority client)))
-        (lsp-register-client client)
-        (message "Registered a language server with id: %s and container name: %s" docker-server-id docker-container-name-full))
-    (user-error "No such client %s" server-id)))
+(defun lsp-docker-start ()
+  "Register and launch a server to use LSP mode in a container for the current project"
+  (interactive)
+  (lsp-docker-register)
+  (lsp))
 
 (provide 'lsp-docker)
 ;;; lsp-docker.el ends here
