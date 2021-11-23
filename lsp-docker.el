@@ -223,10 +223,31 @@ the docker container to run the language server."
          :launch-server-cmd-fn #'lsp-docker-launch-new-container))
       client-configs)))
 
+(defvar lsp-docker-default-priority
+  100
+  "Default lsp-docker containerized servers priority (it needs to be bigger than default servers in order to override them)")
+
+(defcustom lsp-docker-persistent-default-config
+  (ht ('server (ht ('type "docker")
+                   ('subtype "image")
+                   ('name "emacslsp/lsp-docker-langservers")
+                   ('server nil)
+                   ('launch_command nil)))
+      ('mappings [
+                  (ht ('source ".")
+                      ('destination "/projects"))
+                  ]))
+  "Default configuration for all language servers with persistent configurations"
+  :type 'hash-table
+  :group 'lsp-docker
+)
+
 (defun lsp-docker-get-config-from-project-config-file (project-config-file-path)
   "Get the LSP configuration based on a project configuration file"
-  (let ((config (yaml-parse-string (f-read project-config-file-path))))
-    (gethash 'lsp config)))
+  (if (f-exists? project-config-file-path)
+      (if-let ((whole-config (yaml-parse-string (f-read project-config-file-path)))
+               (lsp-config (gethash 'lsp whole-config)))
+        (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))
 
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
@@ -235,10 +256,6 @@ the docker container to run the language server."
                                        (concat normalized-project-root ".lsp-docker.yml")
                                      ((concat normalized-project-root ".lsp-docker.yaml")))))
     (lsp-docker-get-config-from-project-config-file project-config-file-path)))
-
-(defvar lsp-docker-default-priority
-  100
-  "Default lsp-docker containerized servers priority (it needs to be bigger than default servers in order to override them)")
 
 (defvar lsp-docker-supported-server-types-subtypes
   (ht ('docker (list 'container 'image)))
