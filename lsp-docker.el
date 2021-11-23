@@ -393,9 +393,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                (cl-incf docker-container-name-suffix)
                              docker-container-name-suffix))
                  docker-container-name))
-              (actual-server-command (if server-command
-                                         server-command
-                                       (lsp--client-))))
           (setf (lsp--client-server-id client) docker-server-id
                 (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
                                                             path-mappings
