@@ -384,33 +384,33 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                                               launch-server-cmd-fn)
   "Registers docker clients with lsp (by persisting configuration)"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
-      (progn
-        (let ((docker-container-name-full
-               (if docker-container-name-suffix
-                   (format "%s-%d"
-                           docker-container-name
-                           (if (numberp docker-container-name-suffix)
-                               (cl-incf docker-container-name-suffix)
-                             docker-container-name-suffix))
-                 docker-container-name))
-          (setf (lsp--client-server-id client) docker-server-id
-                (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
-                                                            path-mappings
-                                                            docker-container-name-full)
-                (lsp--client-activation-fn client) activation-fn
-                (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
-                (lsp--client-new-connection client) (plist-put
-                                                     (lsp-stdio-connection
-                                                      (lambda ()
-                                                        (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                                                 docker-container-name-full
-                                                                 path-mappings
-                                                                 docker-image-id
-                                                                 server-command)))
-                                                     :test? (lambda (&rest _)
-                                                              t))
-                (lsp--client-priority client) (or priority (lsp--client-priority client))))
-        (lsp-register-client client))
+      (let ((docker-container-name-full
+             (if docker-container-name-suffix
+                 (format "%s-%d"
+                         docker-container-name
+                         (if (numberp docker-container-name-suffix)
+                             (cl-incf docker-container-name-suffix)
+                           docker-container-name-suffix))
+               docker-container-name)))
+        (setf (lsp--client-server-id client) docker-server-id
+              (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
+                                                          path-mappings
+                                                          docker-container-name-full)
+              (lsp--client-activation-fn client) activation-fn
+              (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
+              (lsp--client-new-connection client) (plist-put
+                                                   (lsp-stdio-connection
+                                                    (lambda ()
+                                                      (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                                               docker-container-name-full
+                                                               path-mappings
+                                                               docker-image-id
+                                                               server-command)))
+                                                   :test? (lambda (&rest _)
+                                                            t))
+              (lsp--client-priority client) (or priority (lsp--client-priority client)))
+        (lsp-register-client client)
+        (message "Registered a language server with id: %s and container name: %s" docker-server-id docker-container-name-full))
     (user-error "No such client %s" server-id)))
 
 (provide 'lsp-docker)
