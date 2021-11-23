@@ -253,7 +253,7 @@ the docker container to run the language server."
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
   (let ((project-config-file-path (if (f-exists? (f-join (lsp-workspace-root) ".lsp-docker.yml"))
                                        (f-join (lsp-workspace-root) ".lsp-docker.yml")
-                                     ((f-join (lsp-workspace-root) ".lsp-docker.yaml")))))
+                                    (f-join (lsp-workspace-root) ".lsp-docker.yaml"))))
     (lsp-docker-get-config-from-project-config-file project-config-file-path)))
 
 (defvar lsp-docker-supported-server-types-subtypes
