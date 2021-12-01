@@ -31,7 +31,7 @@
 (require 'dash)
 (require 'f)
 (require 'yaml)
-(require 'ht))
+(require 'ht)
 
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
