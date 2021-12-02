@@ -86,7 +86,7 @@ Argument SERVER-COMMAND the language server command to run inside the container.
 Argument DOCKER-CONTAINER-NAME name of container to exec into.
 Argument SERVER-COMMAND the command to execute inside the running container."
 (split-string
-   (format "docker exec -i %s %s" docker-container-name server-command)))
+   (format "%s exec -i %s %s" lsp-docker-command docker-container-name server-command)))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
