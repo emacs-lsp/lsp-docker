@@ -36,7 +36,7 @@
    - 2 containers provided by =lsp-docker=:
       - [[#emacslsplsp-docker-langservers][emacslsp/lsp-docker-langservers]]
       - [[#emacslsplsp-docker-full][emacslsp/lsp-docker-full]]
-   - [[#custom-language-servers][Language server containers built manually]]
+   - [[#custom-language-server-containers][Custom language server containers]]
 
 ** emacslsp/lsp-docker-langservers
    This container is used by =lsp-docker= to run =Language Servers= for =lsp-mode= over local sources.
