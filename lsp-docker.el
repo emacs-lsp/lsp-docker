@@ -324,6 +324,22 @@ the docker container to run the language server."
               (f-same? (f-canonical (car it)) (f-canonical (lsp-workspace-root))))
           path-mappings))
 
+(defun lsp-docker-get-path-mappings-from-container (container-name)
+  "Get path mappings from a container"
+  (-let ((
+          (inspection-command-program . inspection-command-arguments)
+          (--map-when
+           (equal it "'{{.Mounts}}'")
+           "'{{json .Mounts}}'"
+           (s-split " " (format "%s container inspect -f '{{.Mounts}}' %s" lsp-docker-command container-name)))))
+    (-let (((exit-code . output) (with-temp-buffer
+                                  (cons
+                                   (apply #'call-process inspection-command-program nil "lsp-docker-testing" nil inspection-command-arguments)
+                                   (buffer-string)))))
+      (if (equal exit-code 0)
+          (message "Nice!")
+        (user-error "Cannot analyze the following container: %s" container-name)))))
+
 (defun lsp-docker-launch-existing-container (docker-container-name &rest _unused)
   "Return the docker command to be executed on host.
 Argument DOCKER-CONTAINER-NAME name to use for container."
