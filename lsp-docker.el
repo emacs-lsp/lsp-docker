@@ -324,6 +324,16 @@ the docker container to run the language server."
               (f-same? (f-canonical (car it)) (f-canonical (lsp-workspace-root))))
           path-mappings))
 
+(defun lsp-docker-verify-path-mappings-against-container (path-mappings container-name)
+  "Verify that specified path mappings are all included in container's path mappings"
+  (--all? (let ((source (car it))
+                (destination (cdr it)))
+            (-any? (lambda (mapping)
+                     (and (f-same? source (car mapping))
+                          (equal destination (cdr mapping))))
+                   (lsp-docker-get-path-mappings-from-container container-name)))
+          path-mappings))
+
 (defun lsp-docker-get-path-mappings-from-container (container-name)
   "Get path mappings from a container"
   (-let ((
@@ -332,13 +342,16 @@ the docker container to run the language server."
            (equal it "'{{.Mounts}}'")
            "'{{json .Mounts}}'"
            (s-split " " (format "%s container inspect -f '{{.Mounts}}' %s" lsp-docker-command container-name)))))
-    (-let (((exit-code . output) (with-temp-buffer
+    (-let (((exit-code . raw-output) (with-temp-buffer
                                   (cons
-                                   (apply #'call-process inspection-command-program nil "lsp-docker-testing" nil inspection-command-arguments)
+                                   (apply #'call-process inspection-command-program nil (current-buffer) nil inspection-command-arguments)
                                    (buffer-string)))))
       (if (equal exit-code 0)
-          (message "Nice!")
-        (user-error "Cannot analyze the following container: %s" container-name)))))
+          (let* ((output (s-chop-prefix "'" (s-chop-suffix "'" (s-chomp raw-output))))
+                 (raw-mappings (append (json-parse-string output) nil)) ; using append to convert a vector to a list
+                 (bind-mappings (--filter (and (equal (gethash "Type" it) "bind") (equal (gethash "RW" it) t)) raw-mappings)))
+            (--map (cons (f-canonical (gethash "Source" it)) (f-canonical (gethash "Destination" it))) bind-mappings))
+        (user-error "Cannot analyze the following container: %s, exit code: %d" container-name exit-code)))))
 
 (defun lsp-docker-launch-existing-container (docker-container-name &rest _unused)
   "Return the docker command to be executed on host.
