@@ -5,6 +5,7 @@
 (package-file "lsp-docker.el")
 
 (source "gnu")
+(source "melpa")
 
 (depends-on "emacs" "25.1")
 (depends-on "dash")
