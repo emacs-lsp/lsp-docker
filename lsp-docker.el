@@ -294,10 +294,10 @@ the docker container to run the language server."
         (intern (gethash 'server lsp-server-info))
       (gethash 'server lsp-server-info))))
 
-(defun lsp-docker-get-path-mappings (config)
+(defun lsp-docker-get-path-mappings (config project-directory)
   "Get the server path mappings"
   (if-let ((lsp-mappings-info (gethash 'mappings config)))
-      (--map (cons (f-canonical (gethash 'source it)) (gethash 'destination it)) lsp-mappings-info)
+      (--map (cons (f-canonical (f-expand (gethash 'source it) project-directory)) (gethash 'destination it)) lsp-mappings-info)
     (user-error "No path mappings specified!")))
 
 (defun lsp-docker-get-launch-command (config)
@@ -395,7 +395,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
              (server-type-subtype (lsp-docker-get-server-type-subtype config))
              (server-container-name (lsp-docker-get-server-container-name config))
              (server-image-name (lsp-docker-get-server-image-name config))
-             (path-mappings (lsp-docker-get-path-mappings config))
+             (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
              (regular-server-id (lsp-docker-get-server-id config))
              (server-id (lsp-docker-generate-docker-server-id config (lsp-workspace-root)))
              (server-launch-command (lsp-docker-get-launch-command config)))
