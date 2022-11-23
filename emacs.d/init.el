@@ -12,9 +12,9 @@
         yasnippet    ;; helpers
 
         ;; major modes not in core
-	dockerfile-mode
-	go-mode
-	typescript-mode))
+        dockerfile-mode
+        go-mode
+        typescript-mode))
 
 (setq package-archives '(("melpa" . "http://melpa.org/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")))
