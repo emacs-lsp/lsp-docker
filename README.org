@@ -140,6 +140,8 @@ lsp:
     # (selected by a server id specified above) in stdio mode
     # Note: launch_command is not used with container subtype servers
     # as a command is embedded in a container itself and serves as an entrypoint
+    # Note: config path mappings are compared with an actual container (with container subtype servers):
+    # container mappings must contain all the config mappings (destination paths inside containers have to be absolute)
   mappings:
     - source: "/your/host/source/path"
       destination: "/your/local/path/inside/a/container"
