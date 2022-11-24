@@ -345,6 +345,22 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
+(defun lsp-docker--run-docker-command (command-arguments)
+  "Run a command (with a configurable command itself: docker or podman) and get its exit code and output as a pair (exit-code . output)"
+  (lsp-docker--run-external-command (format "%s %s" lsp-docker-command command-arguments)))
+
+(defun lsp-docker--run-external-command (command)
+  "Run a command and get its output and exit code"
+  (-let ((
+          (command-program . command-arguments)
+          (s-split " " command)))
+    (-let (((exit-code . raw-output)
+            (with-temp-buffer
+              (cons
+               (apply #'call-process command-program nil (current-buffer) nil command-arguments)
+               (buffer-string)))))
+      (cons exit-code raw-output))))
+
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
                                                               path-mappings
