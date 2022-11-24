@@ -357,6 +357,10 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
          (replacement-pairs (--mapcat (list (cons (car it) (format "'%s'" (base64-decode-string (cadr it))))) tokens-to-decode)))
     (s-replace-all replacement-pairs encoded-token-command)))
 
+(defun lsp-docker--decode-single-quoted-tokens (command-tokens)
+  "Decode single quoted tokens (base64-encoded) from a token list"
+  (--map-when (s-match "'\\([^']+\\)'" it) (format "'%s'" (base64-decode-string (cadr (s-match "'\\([^']+\\)'" it)))) command-tokens))
+
 (defun lsp-docker--run-docker-command (command-arguments)
   "Run a command (with a configurable command itself: docker or podman) and get its exit code and output as a pair (exit-code . output)"
   (lsp-docker--run-external-command (format "%s %s" lsp-docker-command command-arguments)))
