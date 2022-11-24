@@ -369,7 +369,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   "Run a command and get its output and exit code"
   (-let ((
           (command-program . command-arguments)
-          (s-split " " command)))
+          (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters command)))))
     (-let (((exit-code . raw-output)
             (with-temp-buffer
               (cons
