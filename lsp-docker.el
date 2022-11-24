@@ -345,6 +345,18 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
+(defun lsp-docker--encode-single-quoted-parameters (raw-token-command)
+  "Encode single quoted tokens (with base64 encoding) so they won't be split"
+  (let* ((tokens-to-encode (--remove (s-blank-str? (cadr it)) (s-match-strings-all "'\\([^']+\\)'" raw-token-command)))
+         (replacement-pairs (--mapcat (list (cons (car it) (format "'%s'" (base64-encode-string (cadr it))))) tokens-to-encode)))
+    (s-replace-all replacement-pairs raw-token-command)))
+
+(defun lsp-docker--decode-single-quoted-parameters (encoded-token-command)
+  "Decode single quoted tokens (base64-encoded) so they can be used again"
+  (let* ((tokens-to-decode (--remove (s-blank-str? (cadr it)) (s-match-strings-all "'\\([^']+\\)'" encoded-token-command)))
+         (replacement-pairs (--mapcat (list (cons (car it) (format "'%s'" (base64-decode-string (cadr it))))) tokens-to-decode)))
+    (s-replace-all replacement-pairs encoded-token-command)))
+
 (defun lsp-docker--run-docker-command (command-arguments)
   "Run a command (with a configurable command itself: docker or podman) and get its exit code and output as a pair (exit-code . output)"
   (lsp-docker--run-external-command (format "%s %s" lsp-docker-command command-arguments)))
