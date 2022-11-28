@@ -377,6 +377,15 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                (buffer-string)))))
       (cons exit-code raw-output))))
 
+(defun lsp-docker--get-available-images ()
+  "Get available docker images already existing on the host"
+  (-let ((
+          (exit-code . raw-output)
+          (lsp-docker--run-docker-command "image list --format '{{.Repository}}'")))
+    (if (equal exit-code 0)
+        (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
+      (user-error "Cannot analyze the following container: %s, exit code: %d" container-name exit-code))))
+
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
                                                               path-mappings
