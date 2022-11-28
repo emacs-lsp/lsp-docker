@@ -249,6 +249,18 @@ the docker container to run the language server."
                (lsp-config (gethash 'lsp whole-config)))
           (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))
 
+(defun lsp-docker--find-project-config-file-from-lsp ()
+  "Get the LSP configuration file path (project-local configuration, using lsp-mode)"
+  (let ((config-file-path-candidates (list)))
+    (if (lsp-workspace-root)
+        (progn
+          (push (f-join (lsp-workspace-root) ".lsp-docker.yml") config-file-path-candidates)
+          (push (f-join (lsp-workspace-root) ".lsp-docker.yaml") config-file-path-candidates)
+          (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yml") config-file-path-candidates)
+          (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yaml") config-file-path-candidates)
+          (--first (f-exists? it) config-file-path-candidates))
+      nil)))
+
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
   (let ((project-config-file-path (if (f-exists? (f-join (lsp-workspace-root) ".lsp-docker.yml"))
