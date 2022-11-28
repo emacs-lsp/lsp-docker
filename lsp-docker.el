@@ -386,6 +386,10 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
         (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
       (user-error "Cannot get the existing images list from the host, exit code: %d" exit-code))))
 
+(defun lsp-docker--check-image-exists (image-name)
+  "Check that the specified image already exists on the host"
+  (--any? (s-equals? it image-name) (lsp-docker--get-available-images)))
+
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
                                                               path-mappings
