@@ -384,7 +384,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (lsp-docker--run-docker-command "image list --format '{{.Repository}}'")))
     (if (equal exit-code 0)
         (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
-      (user-error "Cannot analyze the following container: %s, exit code: %d" container-name exit-code))))
+      (user-error "Cannot get the existing images list from the host, exit code: %d" exit-code))))
 
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
