@@ -444,11 +444,11 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 (defun lsp-docker--build-image-if-necessary (image-name dockerfile-path)
   "Check that the specified image exists, otherwise build it (if possible)"
   (unless (lsp-docker--check-image-exists image-name)
-    (when dockerfile-path
-      (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
-          (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path)))
-            (lsp-docker--run-image-build image-name dockerfile-path build-buffer-name))
-        (user-error "Cannot register a server with a missing image!"))
+    (if dockerfile-path
+        (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
+            (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path)))
+              (lsp-docker--run-image-build image-name dockerfile-path build-buffer-name))
+          (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
