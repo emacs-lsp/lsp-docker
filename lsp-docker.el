@@ -395,7 +395,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (command-program . command-arguments)
           (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters (lsp-docker--get-build-command image-name dockerfile-path))))))
     (with-current-buffer (get-buffer-create buffer-name)
-       (apply #'call-process command-program nil (current-buffer) nil command-arguments))))
+      (message "Building the image %s, please open the %s buffer for details" image-name buffer-name)
+      (apply #'call-process command-program nil (current-buffer) nil command-arguments))))
 
 (defun lsp-docker--run-external-command (command)
   "Run a command and get its output and exit code"
