@@ -266,10 +266,10 @@ the docker container to run the language server."
         (when (f-exists? dockerfile-path)
           dockerfile-path))))
 
-(defun lsp-docker--find-building-path-from-lsp ()
-  "Get the LSP server building folder path using lsp-mode"
-  (-when-let ((dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp)))
-    (f-dirname dockerfile-path)))
+(defun lsp-docker--find-building-path-from-dockerfile (dockerfile-path)
+  "Get the LSP server building folder path using an explicit dockerfile path"
+  (when dockerfile-path
+    (f-dirname (f-dirname dockerfile-path))))
 
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
