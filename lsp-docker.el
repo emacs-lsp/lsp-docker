@@ -260,6 +260,12 @@ the docker container to run the language server."
           (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yaml") config-file-path-candidates)
           (--first (f-exists? it) config-file-path-candidates))
       nil)))
+(defun lsp-docker--find-project-dockerfile-from-lsp ()
+  "Get the LSP server building Dockerfile path using lsp-mode"
+  (if (lsp-workspace-root)
+      (let ((dockerfile-path (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile")))
+        (when (f-exists? dockerfile-path)
+          dockerfile-path))))
 
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
