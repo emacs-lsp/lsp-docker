@@ -387,7 +387,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                (buffer-string)))))
       (cons exit-code raw-output))))
 
-(defun lsp-docker--get-available-images ()
+(defun lsp-docker--get-existing-images ()
   "Get available docker images already existing on the host"
   (-let ((
           (exit-code . raw-output)
@@ -396,7 +396,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
         (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
       (user-error "Cannot get the existing images list from the host, exit code: %d" exit-code))))
 
-(defun lsp-docker--get-available-containers ()
+(defun lsp-docker--get-existing-containers ()
   "Get available docker images already existing on the host"
   (-let ((
           (exit-code . raw-output)
@@ -407,11 +407,11 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (defun lsp-docker--check-image-exists (image-name)
   "Check that the specified image already exists on the host"
-  (--any? (s-equals? it image-name) (lsp-docker--get-available-images)))
+  (--any? (s-equals? it image-name) (lsp-docker--get-existing-images)))
 
 (defun lsp-docker--check-container-exists (container-name)
   "Check that the specified container already exists on the host"
-  (--any? (s-equals? it container-name) (lsp-docker--get-available-containers)))
+  (--any? (s-equals? it container-name) (lsp-docker--get-existing-containers)))
 
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
