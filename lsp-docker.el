@@ -510,36 +510,37 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
                   (container-subtype (cdr server-type-subtype)))
-                (pcase container-type
-                  ('docker (pcase container-subtype
-                             ('image (progn
-                                       (lsp-docker--build-image-if-necessary server-image-name dockerfile-path)
-                                       (lsp-docker-register-client-with-activation-fn
-                                        :server-id regular-server-id
-                                        :docker-server-id server-id
-                                        :path-mappings path-mappings
-                                        :docker-image-id server-image-name
-                                        :docker-container-name server-container-name
-                                        :docker-container-name-suffix nil
-                                        :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
-                                        :priority lsp-docker-default-priority
-                                        :server-command server-launch-command
-                                        :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
-                             ('container (if (lsp-docker--check-container-exists server-container-name)
-                                             (lsp-docker-register-client-with-activation-fn
-                                              :server-id regular-server-id
-                                              :docker-server-id server-id
-                                              :path-mappings path-mappings
-                                              :docker-image-id nil
-                                              :docker-container-name server-container-name
-                                              :docker-container-name-suffix nil
-                                              :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
-                                              :priority lsp-docker-default-priority
-                                              :server-command server-launch-command
-                                              :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
-                                           (user-error "Invalid LSP docker config: cannot find the specified container: %s" server-container-name))))))
-          (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
-    (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name))))))
+              (pcase container-type
+                ('docker (pcase container-subtype
+                           ('image (progn
+                                     (lsp-docker--build-image-if-necessary server-image-name dockerfile-path)
+                                     (lsp-docker-register-client-with-activation-fn
+                                      :server-id regular-server-id
+                                      :docker-server-id server-id
+                                      :path-mappings path-mappings
+                                      :docker-image-id server-image-name
+                                      :docker-container-name server-container-name
+                                      :docker-container-name-suffix nil
+                                      :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                      :priority lsp-docker-default-priority
+                                      :server-command server-launch-command
+                                      :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+                           ('container (if (lsp-docker--check-container-exists server-container-name)
+                                           (lsp-docker-register-client-with-activation-fn
+                                            :server-id regular-server-id
+                                            :docker-server-id server-id
+                                            :path-mappings path-mappings
+                                            :docker-image-id nil
+                                            :docker-container-name server-container-name
+                                            :docker-container-name-suffix nil
+                                            :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                            :priority lsp-docker-default-priority
+                                            :server-command server-launch-command
+                                            :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
+                                         (user-error "Invalid LSP docker config: cannot find the specified container: %s" server-container-name)))
+                           (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
+                (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))))
+    (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
 
 (defun lsp-docker-start ()
   "Register and launch a server to use LSP mode in a container for the current project"
