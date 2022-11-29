@@ -252,14 +252,13 @@ the docker container to run the language server."
 (defun lsp-docker--find-project-config-file-from-lsp ()
   "Get the LSP configuration file path (project-local configuration, using lsp-mode)"
   (let ((config-file-path-candidates (list)))
-    (if (lsp-workspace-root)
-        (progn
-          (push (f-join (lsp-workspace-root) ".lsp-docker.yml") config-file-path-candidates)
-          (push (f-join (lsp-workspace-root) ".lsp-docker.yaml") config-file-path-candidates)
-          (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yml") config-file-path-candidates)
-          (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yaml") config-file-path-candidates)
-          (--first (f-exists? it) config-file-path-candidates))
-      nil)))
+    (when (lsp-workspace-root)
+      (push (f-join (lsp-workspace-root) ".lsp-docker.yml") config-file-path-candidates)
+      (push (f-join (lsp-workspace-root) ".lsp-docker.yaml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yaml") config-file-path-candidates)
+      (--first (f-exists? it) config-file-path-candidates))))
+
 (defun lsp-docker--find-project-dockerfile-from-lsp ()
   "Get the LSP server building Dockerfile path using lsp-mode"
   (if (lsp-workspace-root)
