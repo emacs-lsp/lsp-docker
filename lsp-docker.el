@@ -489,7 +489,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                  :docker-image-id ',image-name
                                  :docker-container-name ',docker-container-name
                                  :docker-container-name-suffix nil
-                                 :activation-fn ,(lsp-docker-create-activation-function-by-project-dir project-root)
+                                 :activation-fn (lsp-docker-create-activation-function-by-project-dir ,project-root)
                                  :priority lsp-docker-default-priority
                                  :server-command ',server-command
                                  :launch-server-cmd-fn #'lsp-docker-launch-new-container))))))
