@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-lsp/lsp-docker
 ;; Keywords: languages langserver
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "26.1") (dash "2.14.1") (lsp-mode "6.2.1") (f "0.20.0") (s "1.13.0") (yaml "0.2.0") (ht "2.0") (async "1.9.6"))
+;; Package-Requires: ((emacs "26.1") (dash "2.14.1") (lsp-mode "6.2.1") (f "0.20.0") (s "1.13.0") (yaml "0.2.0") (ht "2.0"))
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,6 @@
 (require 's)
 (require 'yaml)
 (require 'ht)
-(require 'async)
 
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
