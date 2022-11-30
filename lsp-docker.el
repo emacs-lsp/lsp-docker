@@ -266,7 +266,6 @@ the docker container to run the language server."
     (when (lsp-workspace-root)
       (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile") dockerfile-path-candidates)
       (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile.lsp") dockerfile-path-candidates)
-      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile.server") dockerfile-path-candidates)
       (--first (f-exists? it) dockerfile-path-candidates))))
 
 (defun lsp-docker--find-building-path-from-dockerfile (dockerfile-path)
