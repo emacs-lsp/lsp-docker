@@ -262,10 +262,12 @@ the docker container to run the language server."
 
 (defun lsp-docker--find-project-dockerfile-from-lsp ()
   "Get the LSP server building Dockerfile path using lsp-mode"
-  (if (lsp-workspace-root)
-      (let ((dockerfile-path (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile")))
-        (when (f-exists? dockerfile-path)
-          dockerfile-path))))
+  (let ((dockerfile-path-candidates (list)))
+    (when (lsp-workspace-root)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile") dockerfile-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile.lsp") dockerfile-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile.server") dockerfile-path-candidates)
+      (--first (f-exists? it) dockerfile-path-candidates))))
 
 (defun lsp-docker--find-building-path-from-dockerfile (dockerfile-path)
   "Get the LSP server building folder path using an explicit dockerfile path"
