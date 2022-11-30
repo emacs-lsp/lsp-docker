@@ -455,6 +455,47 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
+(cl-defun lsp-docker--build-image-and-register-server-async (&key image-name
+                                                                  dockerfile-path
+                                                                  project-root
+                                                                  server-id
+                                                                  docker-server-id
+                                                                  path-mappings
+                                                                  docker-image-id
+                                                                  docker-container-name
+                                                                  (docker-container-name-suffix lsp-docker-container-name-suffix)
+                                                                  activation-fn
+                                                                  priority
+                                                                  server-command
+                                                                  launch-server-cmd-fn)
+  "Build an image asynchronously and register it afterwards"
+  (unless (lsp-docker--check-image-exists image-name) ;; Check again whether we have to build a new image
+    (if dockerfile-path
+        (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
+            (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path))
+                  (build-command (lsp-docker--get-build-command image-name dockerfile-path)))
+              (with-current-buffer (get-buffer-create build-buffer-name)
+                (message "Building the image %s, please open the %s buffer for details" image-name build-buffer-name)
+                (make-process
+                 :name "lsp-docker-build"
+                 :buffer (current-buffer)
+                 :command (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters build-command)))
+                 :sentinel `(lambda (proc _message)
+                              (when (eq (process-status proc) 'exit)
+                                (lsp-docker-register-client-with-activation-fn
+                                 :server-id ',server-id
+                                 :docker-server-id ',docker-server-id
+                                 :path-mappings ',path-mappings
+                                 :docker-image-id ',image-name
+                                 :docker-container-name ',docker-container-name
+                                 :docker-container-name-suffix nil
+                                 :activation-fn ,(lsp-docker-create-activation-function-by-project-dir project-root)
+                                 :priority lsp-docker-default-priority
+                                 :server-command ',server-command
+                                 :launch-server-cmd-fn #'lsp-docker-launch-new-container))))))
+          (user-error "Cannot register a server with a missing image!"))
+      (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
+
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
                                                               path-mappings
@@ -503,6 +544,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
       (let* (
              (config (lsp-docker-get-config-from-lsp))
              (dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp))
+             (project-root (lsp-workspace-root))
              (server-type-subtype (lsp-docker-get-server-type-subtype config))
              (server-container-name (lsp-docker-get-server-container-name config))
              (server-image-name (lsp-docker-get-server-image-name config))
@@ -516,9 +558,22 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                   (container-subtype (cdr server-type-subtype)))
               (pcase container-type
                 ('docker (pcase container-subtype
-                           ('image (progn
-                                     (lsp-docker--build-image-if-necessary server-image-name dockerfile-path)
-                                     (lsp-docker-register-client-with-activation-fn
+                           ('image (if (lsp-docker--check-image-exists server-image-name)
+                                       (lsp-docker-register-client-with-activation-fn
+                                        :server-id regular-server-id
+                                        :docker-server-id server-id
+                                        :path-mappings path-mappings
+                                        :docker-image-id server-image-name
+                                        :docker-container-name server-container-name
+                                        :docker-container-name-suffix nil
+                                        :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                        :priority lsp-docker-default-priority
+                                        :server-command server-launch-command
+                                        :launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                     (lsp-docker--build-image-and-register-server-async
+                                      :image-name server-image-name
+                                      :dockerfile-path dockerfile-path
+                                      :project-root project-root
                                       :server-id regular-server-id
                                       :docker-server-id server-id
                                       :path-mappings path-mappings
