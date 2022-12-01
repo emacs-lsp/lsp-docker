@@ -278,7 +278,8 @@ the docker container to run the language server."
   (let* ((lsp-server-info (gethash 'server config))
          (lsp-server-subtype (gethash 'subtype lsp-server-info)))
     (if (equal lsp-server-subtype "container")
-        (gethash 'name lsp-server-info))))
+        (gethash 'name lsp-server-info)
+      "lsp-container")))
 
 (defun lsp-docker-get-server-image-name (config)
   "Get the server image name"
@@ -361,8 +362,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
              (if docker-container-name-suffix
                  (format "%s-%d"
                          docker-container-name
-                         (if (numberp docker-container-name-suffix)
-                             (cl-incf docker-container-name-suffix)
+                         (if (numberp lsp-docker-container-name-suffix)
+                             (cl-incf lsp-docker-container-name-suffix)
                            docker-container-name-suffix))
                docker-container-name)))
         (setf (lsp--client-server-id client) docker-server-id
@@ -411,7 +412,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :path-mappings path-mappings
                                       :docker-image-id server-image-name
                                       :docker-container-name server-container-name
-                                      :docker-container-name-suffix nil
                                       :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
                                       :priority lsp-docker-default-priority
                                       :server-command server-launch-command
