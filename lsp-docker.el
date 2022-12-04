@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-lsp/lsp-docker
 ;; Keywords: languages langserver
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "26.1") (dash "2.14.1") (lsp-mode "6.2.1") (f "0.20.0") (yaml "0.2.0") (ht "2.0"))
+;; Package-Requires: ((emacs "26.1") (dash "2.14.1") (lsp-mode "6.2.1") (f "0.20.0") (s "1.13.0") (yaml "0.2.0") (ht "2.0"))
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@
 (require 'lsp-mode)
 (require 'dash)
 (require 'f)
+(require 's)
 (require 'yaml)
 (require 'ht)
 
@@ -249,11 +250,32 @@ the docker container to run the language server."
                (lsp-config (gethash 'lsp whole-config)))
           (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))
 
+(defun lsp-docker--find-project-config-file-from-lsp ()
+  "Get the LSP configuration file path (project-local configuration, using lsp-mode)"
+  (let ((config-file-path-candidates (list)))
+    (when (lsp-workspace-root)
+      (push (f-join (lsp-workspace-root) ".lsp-docker.yml") config-file-path-candidates)
+      (push (f-join (lsp-workspace-root) ".lsp-docker.yaml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yaml") config-file-path-candidates)
+      (--first (f-exists? it) config-file-path-candidates))))
+
+(defun lsp-docker--find-project-dockerfile-from-lsp ()
+  "Get the LSP server building Dockerfile path using lsp-mode"
+  (let ((dockerfile-path-candidates (list)))
+    (when (lsp-workspace-root)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile") dockerfile-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "Dockerfile.lsp") dockerfile-path-candidates)
+      (--first (f-exists? it) dockerfile-path-candidates))))
+
+(defun lsp-docker--find-building-path-from-dockerfile (dockerfile-path)
+  "Get the LSP server building folder path using an explicit dockerfile path"
+  (when dockerfile-path
+    (f-dirname (f-dirname dockerfile-path))))
+
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
-  (let ((project-config-file-path (if (f-exists? (f-join (lsp-workspace-root) ".lsp-docker.yml"))
-                                       (f-join (lsp-workspace-root) ".lsp-docker.yml")
-                                    (f-join (lsp-workspace-root) ".lsp-docker.yaml"))))
+  (let ((project-config-file-path (lsp-docker--find-project-config-file-from-lsp)))
     (or (lsp-docker-get-config-from-project-config-file project-config-file-path)
         (ht-copy lsp-docker-persistent-default-config))))
 
@@ -345,6 +367,134 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
+(defun lsp-docker--encode-single-quoted-parameters (raw-token-command)
+  "Encode single quoted tokens (with base64 encoding) so they won't be split"
+  (let* ((tokens-to-encode (--remove (s-blank-str? (cadr it)) (s-match-strings-all "'\\([^']+\\)'" raw-token-command)))
+         (replacement-pairs (--mapcat (list (cons (car it) (format "'%s'" (base64-encode-string (cadr it))))) tokens-to-encode)))
+    (s-replace-all replacement-pairs raw-token-command)))
+
+(defun lsp-docker--decode-single-quoted-parameters (encoded-token-command)
+  "Decode single quoted tokens (base64-encoded) so they can be used again"
+  (let* ((tokens-to-decode (--remove (s-blank-str? (cadr it)) (s-match-strings-all "'\\([^']+\\)'" encoded-token-command)))
+         (replacement-pairs (--mapcat (list (cons (car it) (format "'%s'" (base64-decode-string (cadr it))))) tokens-to-decode)))
+    (s-replace-all replacement-pairs encoded-token-command)))
+
+(defun lsp-docker--decode-single-quoted-tokens (command-tokens)
+  "Decode single quoted tokens (base64-encoded) from a token list"
+  (--map-when (s-match "'\\([^']+\\)'" it) (format "'%s'" (base64-decode-string (cadr (s-match "'\\([^']+\\)'" it)))) command-tokens))
+
+(defun lsp-docker--run-docker-command (command-arguments)
+  "Run a command (with a configurable command itself: docker or podman) and get its exit code and output as a pair (exit-code . output)"
+  (lsp-docker--run-external-command (format "%s %s" lsp-docker-command command-arguments)))
+
+(defun lsp-docker--get-build-command (image-name dockerfile-path)
+  "Get a building command string"
+  (format "%s build --tag %s --file %s %s" lsp-docker-command image-name dockerfile-path (lsp-docker--find-building-path-from-dockerfile dockerfile-path)))
+
+(defun lsp-docker--run-image-build (image-name dockerfile-path buffer-name)
+  "Build the specified image using a particular dockerfile (with its output redirected to a specified buffer)"
+  (-let ((
+          (command-program . command-arguments)
+          (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters (lsp-docker--get-build-command image-name dockerfile-path))))))
+    (with-current-buffer (get-buffer-create buffer-name)
+      (message "Building the image %s, please open the %s buffer for details" image-name buffer-name)
+      (apply #'call-process command-program nil (current-buffer) nil command-arguments))))
+
+(defun lsp-docker--run-external-command (command)
+  "Run a command and get its output and exit code"
+  (-let ((
+          (command-program . command-arguments)
+          (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters command)))))
+    (-let (((exit-code . raw-output)
+            (with-temp-buffer
+              (cons
+               (apply #'call-process command-program nil (current-buffer) nil command-arguments)
+               (buffer-string)))))
+      (cons exit-code raw-output))))
+
+(defun lsp-docker--get-existing-images ()
+  "Get available docker images already existing on the host"
+  (-let ((
+          (exit-code . raw-output)
+          (lsp-docker--run-docker-command "image list --format '{{.Repository}}'")))
+    (if (equal exit-code 0)
+        (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
+      (user-error "Cannot get the existing images list from the host, exit code: %d" exit-code))))
+
+(defun lsp-docker--get-existing-containers ()
+  "Get available docker images already existing on the host"
+  (-let ((
+          (exit-code . raw-output)
+          (lsp-docker--run-docker-command "container list --all --format '{{.Names}}'")))
+    (if (equal exit-code 0)
+        (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
+      (user-error "Cannot get the existing containers list from the host, exit code: %d" exit-code))))
+
+(defun lsp-docker--check-image-exists (image-name)
+  "Check that the specified image already exists on the host"
+  (--any? (s-equals? it image-name) (lsp-docker--get-existing-images)))
+
+(defun lsp-docker--check-container-exists (container-name)
+  "Check that the specified container already exists on the host"
+  (--any? (s-equals? it container-name) (lsp-docker--get-existing-containers)))
+
+(defun lsp-docker--generate-build-buffer-name (image-name dockerfile-path)
+  "Generate a buffer name used when building the specified image"
+  (let ((image-part image-name)
+        (dockerfile-path-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) dockerfile-path))))
+    (s-join "-" (list image-part dockerfile-path-part "build"))))
+
+(defun lsp-docker--build-image-if-necessary (image-name dockerfile-path)
+  "Check that the specified image exists, otherwise build it (if possible)"
+  (unless (lsp-docker--check-image-exists image-name)
+    (if dockerfile-path
+        (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
+            (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path)))
+              (lsp-docker--run-image-build image-name dockerfile-path build-buffer-name))
+          (user-error "Cannot register a server with a missing image!"))
+      (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
+
+(cl-defun lsp-docker--build-image-and-register-server-async (&key image-name
+                                                                  dockerfile-path
+                                                                  project-root
+                                                                  server-id
+                                                                  docker-server-id
+                                                                  path-mappings
+                                                                  docker-image-id
+                                                                  docker-container-name
+                                                                  (docker-container-name-suffix lsp-docker-container-name-suffix)
+                                                                  activation-fn
+                                                                  priority
+                                                                  server-command
+                                                                  launch-server-cmd-fn)
+  "Build an image asynchronously and register it afterwards"
+  (unless (lsp-docker--check-image-exists image-name) ;; Check again whether we have to build a new image
+    (if dockerfile-path
+        (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
+            (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path))
+                  (build-command (lsp-docker--get-build-command image-name dockerfile-path)))
+              (with-current-buffer (get-buffer-create build-buffer-name)
+                (message "Building the image %s, please open the %s buffer for details" image-name build-buffer-name)
+                (make-process
+                 :name "lsp-docker-build"
+                 :buffer (current-buffer)
+                 :command (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters build-command)))
+                 :sentinel `(lambda (proc _message)
+                              (when (eq (process-status proc) 'exit)
+                                (lsp-docker-register-client-with-activation-fn
+                                 :server-id ',server-id
+                                 :docker-server-id ',docker-server-id
+                                 :path-mappings ',path-mappings
+                                 :docker-image-id ',image-name
+                                 :docker-container-name ',docker-container-name
+                                 :docker-container-name-suffix nil
+                                 :activation-fn (lsp-docker-create-activation-function-by-project-dir ,project-root)
+                                 :priority lsp-docker-default-priority
+                                 :server-command ',server-command
+                                 :launch-server-cmd-fn #'lsp-docker-launch-new-container))))))
+          (user-error "Cannot register a server with a missing image!"))
+      (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
+
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
                                                               path-mappings
@@ -392,6 +542,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (if (lsp-workspace-root)
       (let* (
              (config (lsp-docker-get-config-from-lsp))
+             (dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp))
+             (project-root (lsp-workspace-root))
              (server-type-subtype (lsp-docker-get-server-type-subtype config))
              (server-container-name (lsp-docker-get-server-container-name config))
              (server-image-name (lsp-docker-get-server-image-name config))
@@ -403,9 +555,24 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
                   (container-subtype (cdr server-type-subtype)))
-                (pcase container-type
-                  ('docker (pcase container-subtype
-                             ('image (lsp-docker-register-client-with-activation-fn
+              (pcase container-type
+                ('docker (pcase container-subtype
+                           ('image (if (lsp-docker--check-image-exists server-image-name)
+                                       (lsp-docker-register-client-with-activation-fn
+                                        :server-id regular-server-id
+                                        :docker-server-id server-id
+                                        :path-mappings path-mappings
+                                        :docker-image-id server-image-name
+                                        :docker-container-name server-container-name
+                                        :docker-container-name-suffix nil
+                                        :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                        :priority lsp-docker-default-priority
+                                        :server-command server-launch-command
+                                        :launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                     (lsp-docker--build-image-and-register-server-async
+                                      :image-name server-image-name
+                                      :dockerfile-path dockerfile-path
+                                      :project-root project-root
                                       :server-id regular-server-id
                                       :docker-server-id server-id
                                       :path-mappings path-mappings
@@ -415,19 +582,22 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
                                       :priority lsp-docker-default-priority
                                       :server-command server-launch-command
-                                      :launch-server-cmd-fn #'lsp-docker-launch-new-container))
-                             ('container (lsp-docker-register-client-with-activation-fn
-                                          :server-id regular-server-id
-                                          :docker-server-id server-id
-                                          :path-mappings path-mappings
-                                          :docker-image-id nil
-                                          :docker-container-name server-container-name
-                                          :docker-container-name-suffix nil
-                                          :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
-                                          :priority lsp-docker-default-priority
-                                          :server-command server-launch-command
-                                          :launch-server-cmd-fn #'lsp-docker-launch-existing-container))))))
-          (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
+                                      :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+                           ('container (if (lsp-docker--check-container-exists server-container-name)
+                                           (lsp-docker-register-client-with-activation-fn
+                                            :server-id regular-server-id
+                                            :docker-server-id server-id
+                                            :path-mappings path-mappings
+                                            :docker-image-id nil
+                                            :docker-container-name server-container-name
+                                            :docker-container-name-suffix nil
+                                            :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                            :priority lsp-docker-default-priority
+                                            :server-command server-launch-command
+                                            :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
+                                         (user-error "Invalid LSP docker config: cannot find the specified container: %s" server-container-name)))
+                           (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
+                (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))))
     (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
 
 (defun lsp-docker-start ()

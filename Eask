@@ -11,6 +11,7 @@
 (depends-on "dash")
 (depends-on "lsp-mode")
 (depends-on "f")
+(depends-on "s")
 (depends-on "yaml")
 (depends-on "ht")
 

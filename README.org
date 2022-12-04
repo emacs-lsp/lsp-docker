@@ -119,7 +119,7 @@
 ** Custom language server containers     
    You can use manually built language containers or images hosting language server(s), just follow a few simple rules (shown below).
    
-*** Building a container (or an image):
+*** Building a container (or an image) manually:
     You have 2 constraints:
     - A language server must be launched in =stdio= mode (other types of communication are yet to be supported)
     - A docker container (only =container= subtype, see the configuration below) must have your language server as an entrypoint (basically you have to be able to launch it with =docker start -i <container_name>= as it is launched this way with =lsp-docker=)
@@ -147,6 +147,9 @@ lsp:
 
 *** Registering a language server using a =.dir-locals= file:
     Just refer to the source code and general conventions of using =.dir-locals=. The variable you need is =lsp-docker-persistent-default-config=, its content is merged with the =lsp= section from a configuration file (if present).
+    
+*** Automatic image building:
+    You can also build an image automatically (currently supported only for =image= subtype): just drop the corresponding =Dockerfile= into the =.lsp-docker= folder in the project root (=Dockerfile= may be named as =Dockerfile= or =Dockerfile.lsp=). Take a note that you can also place the =.lsp-docker.yml= config there as well. Building process is triggered by the =lsp-docker-register= call (you will be prompted whether you want to build the image). In case of an automatic build the image will be registered automatically (based on the values from the config or =.dir-locals= file).
 
 ** Docker over TRAMP (TBD)
    Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
