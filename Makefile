@@ -3,7 +3,8 @@ SHELL=/usr/bin/env bash
 EMACS ?= emacs
 EASK ?= eask
 
-ci: build compile checkdoc lint
+# TODO: add `lint`
+ci: build compile checkdoc
 
 build:
 	$(EASK) package
