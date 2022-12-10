@@ -2,7 +2,12 @@
          "1.0.0"
          "LSP Docker integration")
 
+(website-url "https://github.com/emacs-lsp/lsp-docker")
+(keywords "languages" "langserver")
+
 (package-file "lsp-docker.el")
+
+(script "test" "echo \"Error: no test specified\" && exit 1")
 
 (source "gnu")
 (source "melpa")
