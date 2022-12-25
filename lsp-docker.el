@@ -138,7 +138,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
     lsp-go
     lsp-html
     lsp-javascript
-    lsp-pyls)
+    lsp-pylsp)
   "Default list of client packages to load.")
 
 (defvar lsp-docker-default-client-configs
@@ -149,7 +149,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
    (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
    (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
    (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
-   (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
+   (list :server-id 'pylsp :docker-server-id 'pyls-docker :server-command "pylsp")
    (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio"))
   "Default list of client configurations.")
 

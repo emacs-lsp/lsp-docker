@@ -54,4 +54,4 @@ RUN apt-get update \
 
 # Python
 RUN apt-get install -y python3-pip \
-	&& pip3 install 'python-language-server[all]'
+	&& pip3 install 'python-lsp-server[all]'
