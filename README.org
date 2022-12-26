@@ -30,7 +30,7 @@
      | Go                    | [[https://golang.org/x/tools/cmd/gopls][gopls]]                             |
      | HTML                  | [[https://github.com/vscode-langservers/vscode-html-languageserver][html]]                              |
      | JavaScript/TypeScript | [[https://github.com/theia-ide/typescript-language-server][typescript-language-server]]        |
-     | Python                | [[https://github.com/palantir/python-language-server][pyls]]                              |
+     | Python                | [[https://github.com/python-lsp/python-lsp-server][pylsp]]                             |
 ** Usage
    There are two ways of working with containerized language servers:
    - 2 containers provided by =lsp-docker=:
@@ -57,7 +57,7 @@
       (require 'lsp-docker)
 
       (defvar lsp-docker-client-packages
-          '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
+          '(lsp-css lsp-clients lsp-bash lsp-go lsp-pylsp lsp-html lsp-typescript
             lsp-terraform lsp-clangd))
 
       (setq lsp-docker-client-configs
@@ -67,7 +67,7 @@
             (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
             (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
             (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
-            (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
+            (:server-id pylsp :docker-server-id pyls-docker :server-command "pyls")
             (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")))
 
       (require 'lsp-docker)
