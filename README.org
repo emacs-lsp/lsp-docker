@@ -67,7 +67,7 @@
             (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
             (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
             (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
-            (:server-id pylsp :docker-server-id pyls-docker :server-command "pyls")
+            (:server-id pylsp :docker-server-id pyls-docker :server-command "pylsp")
             (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")))
 
       (require 'lsp-docker)
