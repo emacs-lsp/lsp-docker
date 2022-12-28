@@ -36,7 +36,7 @@
 
 (defgroup lsp-docker nil
   "Language Server Protocol dockerized servers support."
-  :group 'tools
+  :group 'lsp-mode
   :tag "Language Server in docker (lsp-docker)")
 
 (defcustom lsp-docker-log-docker-invocations nil
