@@ -44,6 +44,10 @@
   :group 'lsp-docker
   :type 'boolean)
 
+(defun lsp-docker--log-docker-invocations-p ()
+  "Return non-nil if should log docker invocation commands"
+  lsp-docker-log-docker-invocations)
+
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
