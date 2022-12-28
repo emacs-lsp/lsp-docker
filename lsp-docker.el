@@ -34,6 +34,16 @@
 (require 'yaml)
 (require 'ht)
 
+(defgroup lsp-docker nil
+  "Language Server Protocol dockerized servers support."
+  :group 'tools
+  :tag "Language Server in docker (lsp-docker)")
+
+(defcustom lsp-docker-log-docker-invocations nil
+  "If non-nil, all docker command invocations will be logged to a *lsp-docker-invocations* buffer."
+  :group 'lsp-docker
+  :type 'boolean)
+
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
