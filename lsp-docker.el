@@ -39,14 +39,19 @@
   :group 'lsp-mode
   :tag "Language Server in docker (lsp-docker)")
 
-(defcustom lsp-docker-log-docker-invocations nil
-  "If non-nil, all docker command invocations will be logged to a *lsp-docker-invocations* buffer."
+(defcustom lsp-docker-log-docker-supplemental-calls nil
+  "If non-nil, all docker command supplemental-calls will be logged to a *lsp-docker-supplemental-calls* buffer."
   :group 'lsp-docker
   :type 'boolean)
 
-(defun lsp-docker--log-docker-invocations-p ()
+(defcustom lsp-docker-log-docker-supplemental-calls-buffer-name "lsp-docker-supplemental-calls"
+  "Log docker supplemental calls using this particular buffer"
+  :group 'lsp-docker
+  :type 'string)
+
+(defun lsp-docker--log-docker-supplemental-calls-p ()
   "Return non-nil if should log docker invocation commands"
-  lsp-docker-log-docker-invocations)
+  lsp-docker-log-docker-supplemental-calls)
 
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
