@@ -40,12 +40,12 @@
   :tag "Language Server in docker (lsp-docker)")
 
 (defcustom lsp-docker-log-docker-supplemental-calls nil
-  "If non-nil, all docker command supplemental-calls will be logged to a *lsp-docker-supplemental-calls* buffer."
+  "If non-nil, all docker command supplemental-calls will be logged to a buffer."
   :group 'lsp-docker
   :type 'boolean)
 
-(defcustom lsp-docker-log-docker-supplemental-calls-buffer-name "lsp-docker-supplemental-calls"
-  "Log docker supplemental calls using this particular buffer"
+(defcustom lsp-docker-log-docker-supplemental-calls-buffer-name "*lsp-docker-supplemental-calls*"
+  "Log docker supplemental calls using this particular buffer."
   :group 'lsp-docker
   :type 'string)
 
