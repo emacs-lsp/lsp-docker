@@ -424,12 +424,25 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (-let ((
           (command-program . command-arguments)
           (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters command)))))
-    (-let (((exit-code . raw-output)
-            (with-temp-buffer
-              (cons
-               (apply #'call-process command-program nil (current-buffer) nil command-arguments)
-               (buffer-string)))))
-      (cons exit-code raw-output))))
+    (progn
+      (lsp-docker--conditionally-log-docker-supplemental-call command-program command-arguments)
+      (lsp-docker--launch-command-internal command-program command-arguments))))
+
+(defun lsp-docker--launch-command-internal (command-program command-arguments)
+  "Run a command using 'call-process' function and return a pair of exit code and raw output"
+  (-let (((exit-code . raw-output)
+          (with-temp-buffer
+            (cons
+             (apply #'call-process command-program nil (current-buffer) nil command-arguments)
+             (buffer-string)))))
+    (cons exit-code raw-output)))
+
+(defun lsp-docker--conditionally-log-docker-supplemental-call (command-program command-arguments)
+  "Log a command into a buffer set in lsp-docker settings group"
+  (if (lsp-docker--log-docker-supplemental-calls-p)
+      (with-current-buffer (get-buffer-create lsp-docker-log-docker-supplemental-calls-buffer-name)
+        (goto-char (point-max))
+        (insert (format "LOG: calling %s %s" command-program (s-join " " command-arguments))))))
 
 (defun lsp-docker--get-existing-images ()
   "Get available docker images already existing on the host"
