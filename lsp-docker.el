@@ -503,14 +503,16 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (unless (lsp-docker--check-image-exists image-name) ;; Check again whether we have to build a new image
     (if dockerfile-path
         (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
-            (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path))
-                  (build-command (lsp-docker--get-build-command image-name dockerfile-path)))
+            (let* ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path))
+                   (build-command (lsp-docker--get-build-command image-name dockerfile-path))
+                   (build-command-decoded (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters build-command)))))
               (with-current-buffer (get-buffer-create build-buffer-name)
+                (lsp-docker--conditionally-log-docker-supplemental-call (car build-command-decoded) (cdr build-command-decoded))
                 (message "Building the image %s, please open the %s buffer for details" image-name build-buffer-name)
                 (make-process
                  :name "lsp-docker-build"
                  :buffer (current-buffer)
-                 :command (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters build-command)))
+                 :command build-command-decoded
                  :sentinel `(lambda (proc _message)
                               (when (eq (process-status proc) 'exit)
                                 (lsp-docker-register-client-with-activation-fn
