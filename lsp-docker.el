@@ -442,7 +442,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (if (lsp-docker--log-docker-supplemental-calls-p)
       (with-current-buffer (get-buffer-create lsp-docker-log-docker-supplemental-calls-buffer-name)
         (goto-char (point-max))
-        (insert (format "LOG: calling %s %s" command-program (s-join " " command-arguments))))))
+        (insert (format "LOG: calling %s %s\n" command-program (s-join " " command-arguments))))))
 
 (defun lsp-docker--get-existing-images ()
   "Get available docker images already existing on the host"
