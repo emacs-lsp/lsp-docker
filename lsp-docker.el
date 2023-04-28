@@ -430,12 +430,10 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (defun lsp-docker--launch-command-internal (command-program command-arguments)
   "Run a command using 'call-process' function and return a pair of exit code and raw output"
-  (-let (((exit-code . raw-output)
-          (with-temp-buffer
-            (cons
-             (apply #'call-process command-program nil (current-buffer) nil command-arguments)
-             (buffer-string)))))
-    (cons exit-code raw-output)))
+  (with-temp-buffer
+    (cons
+     (apply #'call-process command-program nil (current-buffer) nil command-arguments)
+     (buffer-string))))
 
 (defun lsp-docker--conditionally-log-docker-supplemental-call (command-program command-arguments)
   "Log a command into a buffer set in lsp-docker settings group"
