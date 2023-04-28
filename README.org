@@ -150,6 +150,8 @@ lsp:
     
 *** Automatic image building:
     You can also build an image automatically (currently supported only for =image= subtype): just drop the corresponding =Dockerfile= into the =.lsp-docker= folder in the project root (=Dockerfile= may be named as =Dockerfile= or =Dockerfile.lsp=). Take a note that you can also place the =.lsp-docker.yml= config there as well. Building process is triggered by the =lsp-docker-register= call (you will be prompted whether you want to build the image). Image building takes place in the project root (*not* in the =.lsp-docker= subfolder)! In case of an automatic build the image will be registered automatically (based on the values from the config or =.dir-locals= file).
+    
+    You can also troubleshoot any issues with supplemental docker calls (checking whether the required image already exists, building a new image) using the supplemental logging functionality: there are 2 variables: first you have to set =lsp-docker-log-docker-supplemental-calls= to true-like value (by default it is =nil=) and then specify the log buffer in the =lsp-docker-log-docker-supplemental-calls-buffer-name= variable (by default it is set to =*lsp-docker-supplemental-calls*=)
 
 ** Docker over TRAMP (TBD)
    Docker running the language servers and hosting the sources, Emacs running on the desktop machine and connecting to docker instance over TRAMP.
