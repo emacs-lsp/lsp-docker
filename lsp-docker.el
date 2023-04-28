@@ -34,6 +34,25 @@
 (require 'yaml)
 (require 'ht)
 
+(defgroup lsp-docker nil
+  "Language Server Protocol dockerized servers support."
+  :group 'lsp-mode
+  :tag "Language Server in docker (lsp-docker)")
+
+(defcustom lsp-docker-log-docker-supplemental-calls nil
+  "If non-nil, all docker command supplemental-calls will be logged to a buffer."
+  :group 'lsp-docker
+  :type 'boolean)
+
+(defcustom lsp-docker-log-docker-supplemental-calls-buffer-name "*lsp-docker-supplemental-calls*"
+  "Log docker supplemental calls using this particular buffer."
+  :group 'lsp-docker
+  :type 'string)
+
+(defun lsp-docker--log-docker-supplemental-calls-p ()
+  "Return non-nil if should log docker invocation commands"
+  lsp-docker-log-docker-supplemental-calls)
+
 (defun lsp-docker--uri->path (path-mappings docker-container-name uri)
   "Turn docker URI into host path.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
@@ -405,12 +424,23 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (-let ((
           (command-program . command-arguments)
           (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters command)))))
-    (-let (((exit-code . raw-output)
-            (with-temp-buffer
-              (cons
-               (apply #'call-process command-program nil (current-buffer) nil command-arguments)
-               (buffer-string)))))
-      (cons exit-code raw-output))))
+    (progn
+      (lsp-docker--conditionally-log-docker-supplemental-call command-program command-arguments)
+      (lsp-docker--launch-command-internal command-program command-arguments))))
+
+(defun lsp-docker--launch-command-internal (command-program command-arguments)
+  "Run a command using 'call-process' function and return a pair of exit code and raw output"
+  (with-temp-buffer
+    (cons
+     (apply #'call-process command-program nil (current-buffer) nil command-arguments)
+     (buffer-string))))
+
+(defun lsp-docker--conditionally-log-docker-supplemental-call (command-program command-arguments)
+  "Log a command into a buffer set in lsp-docker settings group"
+  (if (lsp-docker--log-docker-supplemental-calls-p)
+      (with-current-buffer (get-buffer-create lsp-docker-log-docker-supplemental-calls-buffer-name)
+        (goto-char (point-max))
+        (insert (format "LOG: calling %s %s\n" command-program (s-join " " command-arguments))))))
 
 (defun lsp-docker--get-existing-images ()
   "Get available docker images already existing on the host"
@@ -471,14 +501,16 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (unless (lsp-docker--check-image-exists image-name) ;; Check again whether we have to build a new image
     (if dockerfile-path
         (if (y-or-n-p (format "Image %s is missing but can be built (Dockerfile was found), do you want to build it?" image-name))
-            (let ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path))
-                  (build-command (lsp-docker--get-build-command image-name dockerfile-path)))
+            (let* ((build-buffer-name (lsp-docker--generate-build-buffer-name image-name dockerfile-path))
+                   (build-command (lsp-docker--get-build-command image-name dockerfile-path))
+                   (build-command-decoded (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters build-command)))))
               (with-current-buffer (get-buffer-create build-buffer-name)
+                (lsp-docker--conditionally-log-docker-supplemental-call (car build-command-decoded) (cdr build-command-decoded))
                 (message "Building the image %s, please open the %s buffer for details" image-name build-buffer-name)
                 (make-process
                  :name "lsp-docker-build"
                  :buffer (current-buffer)
-                 :command (lsp-docker--decode-single-quoted-tokens (s-split " " (lsp-docker--encode-single-quoted-parameters build-command)))
+                 :command build-command-decoded
                  :sentinel `(lambda (proc _message)
                               (when (eq (process-status proc) 'exit)
                                 (lsp-docker-register-client-with-activation-fn
