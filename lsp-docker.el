@@ -277,6 +277,10 @@ the docker container to run the language server."
       (push (f-join (lsp-workspace-root) ".lsp-docker.yaml") config-file-path-candidates)
       (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yml") config-file-path-candidates)
       (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") ".lsp-docker.yaml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "lsp-docker.yml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "lsp-docker.yaml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "config.yml") config-file-path-candidates)
+      (push (f-join (f-join (lsp-workspace-root) ".lsp-docker") "config.yaml") config-file-path-candidates)
       (--first (f-exists? it) config-file-path-candidates))))
 
 (defun lsp-docker--find-project-dockerfile-from-lsp ()
