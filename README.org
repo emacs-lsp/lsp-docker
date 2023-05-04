@@ -127,7 +127,20 @@
     When you have sucessfully built a language server, you have to register it with either a configuration file or a =.dir-locals= file.
 
 *** Registering a language server using a persistent configuration file:
-    A configuration file is a yaml file that is named =.lsp-docker.yml= or =.lsp-docker.yaml= and looks generally like this:
+    A configuration file is a yaml file that can be located at:
+#+begin_src
+<PROJECT_ROOT>/.lsp-docker.yml
+<PROJECT_ROOT>/.lsp-docker.yaml
+<PROJECT_ROOT>/.lsp-docker/.lsp-docker.yml
+<PROJECT_ROOT>/.lsp-docker/.lsp-docker.yaml
+<PROJECT_ROOT>/.lsp-docker/lsp-docker.yml
+<PROJECT_ROOT>/.lsp-docker/lsp-docker.yaml
+<PROJECT_ROOT>/.lsp-docker/config.yml
+<PROJECT_ROOT>/.lsp-docker/config.yaml
+#+end_src
+
+It is structured in the following way:
+
 #+begin_src yaml
 lsp:
   server:
@@ -149,7 +162,7 @@ lsp:
     Just refer to the source code and general conventions of using =.dir-locals=. The variable you need is =lsp-docker-persistent-default-config=, its content is merged with the =lsp= section from a configuration file (if present).
     
 *** Automatic image building:
-    You can also build an image automatically (currently supported only for =image= subtype): just drop the corresponding =Dockerfile= into the =.lsp-docker= folder in the project root (=Dockerfile= may be named as =Dockerfile= or =Dockerfile.lsp=). Take a note that you can also place the =.lsp-docker.yml= config there as well. Building process is triggered by the =lsp-docker-register= call (you will be prompted whether you want to build the image). Image building takes place in the project root (*not* in the =.lsp-docker= subfolder)! In case of an automatic build the image will be registered automatically (based on the values from the config or =.dir-locals= file).
+    You can also build an image automatically (currently supported only for =image= subtype): just drop the corresponding =Dockerfile= into the =.lsp-docker= folder in the project root (=Dockerfile= may be named as =Dockerfile= or =Dockerfile.lsp=). Building process is triggered by the =lsp-docker-register= call (you will be prompted whether you want to build the image). Image building *takes place in the project root* (*not* in the =.lsp-docker= subfolder)! In case of an automatic build the image will be registered automatically (based on the values from the config or =.dir-locals= file).
     
     You can also troubleshoot any issues with supplemental docker calls (checking whether the required image already exists, building a new image) using the supplemental logging functionality: there are 2 variables: first you have to set =lsp-docker-log-docker-supplemental-calls= to true-like value (by default it is =nil=) and then specify the log buffer in the =lsp-docker-log-docker-supplemental-calls-buffer-name= variable (by default it is set to =*lsp-docker-supplemental-calls*=)
 
