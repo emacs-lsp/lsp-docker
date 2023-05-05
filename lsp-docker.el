@@ -384,6 +384,18 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
            (registered-project-root ,project-dir))
        (f-same? current-project-root registered-project-root))))
 
+(defmacro lsp-docker--create-activation-function-by-project-dir-and-base-client (project-dir base-lsp-client)
+  `(lambda (current-file-name current-major-mode)
+     (let ((current-project-root (lsp-workspace-root))
+           (registered-project-root ,project-dir)
+           (base-activation-fn (lsp--client-activation-fn ,base-lsp-client))
+           (base-major-modes (lsp--client-major-modes ,base-lsp-client)))
+       (and (f-same? current-project-root registered-project-root)
+            (or (if (functionp base-activation-fn)
+                    (funcall base-activation-fn current-file-name current-major-mode)
+                  nil)
+                (-contains? base-major-modes current-major-mode))))))
+
 (defun lsp-docker-generate-docker-server-id (config project-root)
   "Generate the docker-server-id from the project config"
   (let ((original-server-id (symbol-name (lsp-docker-get-server-id config)))
