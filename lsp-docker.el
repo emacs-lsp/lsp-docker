@@ -339,6 +339,13 @@ the docker container to run the language server."
         (intern (gethash 'server lsp-server-info))
       (gethash 'server lsp-server-info))))
 
+(defun lsp-docker--get-base-client (config)
+  "Get the base lsp client for dockerized client to be built upon"
+  (if-let* ((base-server-id (lsp-docker-get-server-id config))
+            (base-client (gethash server-id lsp-clients)))
+      base-client
+    (user-error "Cannot find a specified base lsp client! Please check the 'server' parameter in the config")))
+
 (defun lsp-docker-get-path-mappings (config project-directory)
   "Get the server path mappings"
   (if-let ((lsp-mappings-info (gethash 'mappings config)))
