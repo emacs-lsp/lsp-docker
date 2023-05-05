@@ -507,6 +507,21 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
+(defmacro lsp-docker--create-building-process-sentinel (server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command)
+  `(lambda (proc _message)
+     (when (eq (process-status proc) 'exit)
+       (lsp-docker-register-client-with-activation-fn
+        :server-id ',server-id
+        :docker-server-id ',docker-server-id
+        :path-mappings ',path-mappings
+        :docker-image-id ',image-name
+        :docker-container-name ',docker-container-name
+        :docker-container-name-suffix nil
+        :activation-fn ,activation-fn
+        :priority lsp-docker-default-priority
+        :server-command ',server-command
+        :launch-server-cmd-fn #'lsp-docker-launch-new-container))))
+
 (cl-defun lsp-docker--build-image-and-register-server-async (&key image-name
                                                                   dockerfile-path
                                                                   project-root
@@ -534,19 +549,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                  :name "lsp-docker-build"
                  :buffer (current-buffer)
                  :command build-command-decoded
-                 :sentinel `(lambda (proc _message)
-                              (when (eq (process-status proc) 'exit)
-                                (lsp-docker-register-client-with-activation-fn
-                                 :server-id ',server-id
-                                 :docker-server-id ',docker-server-id
-                                 :path-mappings ',path-mappings
-                                 :docker-image-id ',image-name
-                                 :docker-container-name ',docker-container-name
-                                 :docker-container-name-suffix nil
-                                 :activation-fn (lsp-docker-create-activation-function-by-project-dir ,project-root)
-                                 :priority lsp-docker-default-priority
-                                 :server-command ',server-command
-                                 :launch-server-cmd-fn #'lsp-docker-launch-new-container))))))
+                 :sentinel (lsp-docker--create-building-process-sentinel server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command))))
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
