@@ -395,8 +395,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   `(lambda (current-file-name current-major-mode)
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir)
-           (base-activation-fn (lsp--client-activation-fn ,base-lsp-client))
-           (base-major-modes (lsp--client-major-modes ,base-lsp-client)))
+           (base-activation-fn ,(lsp--client-activation-fn base-lsp-client))
+           (base-major-modes ,(lsp--client-major-modes base-lsp-client)))
        (and (f-same? current-project-root registered-project-root)
             (or (if (functionp base-activation-fn)
                     (funcall base-activation-fn current-file-name current-major-mode)
@@ -615,7 +615,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
              (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
              (regular-server-id (lsp-docker-get-server-id config))
              (server-id (lsp-docker-generate-docker-server-id config (lsp-workspace-root)))
-             (server-launch-command (lsp-docker-get-launch-command config)))
+             (server-launch-command (lsp-docker-get-launch-command config))
+             (base-client (lsp-docker--get-base-client config)))
         (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes server-type-subtype)
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
@@ -630,7 +631,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                         :docker-image-id server-image-name
                                         :docker-container-name server-container-name
                                         :docker-container-name-suffix nil
-                                        :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                        :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                         :priority lsp-docker-default-priority
                                         :server-command server-launch-command
                                         :launch-server-cmd-fn #'lsp-docker-launch-new-container)
@@ -644,7 +645,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :docker-image-id server-image-name
                                       :docker-container-name server-container-name
                                       :docker-container-name-suffix nil
-                                      :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                      :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                       :priority lsp-docker-default-priority
                                       :server-command server-launch-command
                                       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
@@ -656,7 +657,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                             :docker-image-id nil
                                             :docker-container-name server-container-name
                                             :docker-container-name-suffix nil
-                                            :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                            :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                             :priority lsp-docker-default-priority
                                             :server-command server-launch-command
                                             :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
