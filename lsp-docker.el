@@ -342,7 +342,7 @@ the docker container to run the language server."
 (defun lsp-docker--get-base-client (config)
   "Get the base lsp client for dockerized client to be built upon"
   (if-let* ((base-server-id (lsp-docker-get-server-id config))
-            (base-client (gethash server-id lsp-clients)))
+            (base-client (gethash base-server-id lsp-clients)))
       base-client
     (user-error "Cannot find a specified base lsp client! Please check the 'server' parameter in the config")))
 
