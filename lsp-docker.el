@@ -385,13 +385,13 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
            docker-container-name)
    " "))
 
-(defmacro lsp-docker-create-activation-function-by-project-dir (project-dir)
+(defun lsp-docker-create-activation-function-by-project-dir (project-dir)
   `(lambda (&rest unused)
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir))
        (f-same? current-project-root registered-project-root))))
 
-(defmacro lsp-docker--create-activation-function-by-project-dir-and-base-client (project-dir base-lsp-client)
+(defun lsp-docker--create-activation-function-by-project-dir-and-base-client (project-dir base-lsp-client)
   `(lambda (current-file-name current-major-mode)
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir)
@@ -507,7 +507,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
-(defmacro lsp-docker--create-building-process-sentinel (server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command)
+(defun lsp-docker--create-building-process-sentinel (server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command)
   `(lambda (proc _message)
      (when (eq (process-status proc) 'exit)
        (lsp-docker-register-client-with-activation-fn
@@ -549,7 +549,14 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                  :name "lsp-docker-build"
                  :buffer (current-buffer)
                  :command build-command-decoded
-                 :sentinel (lsp-docker--create-building-process-sentinel server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command))))
+                 :sentinel (lsp-docker--create-building-process-sentinel
+                            server-id
+                            docker-server-id
+                            path-mappings
+                            image-name
+                            docker-container-name
+                            activation-fn
+                            server-command))))
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
