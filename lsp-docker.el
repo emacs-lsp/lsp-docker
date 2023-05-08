@@ -106,7 +106,17 @@ Argument SERVER-COMMAND the language server command to run inside the container.
 Argument DOCKER-CONTAINER-NAME name of container to exec into.
 Argument SERVER-COMMAND the command to execute inside the running container."
 (split-string
-   (format "%s exec -i %s %s" lsp-docker-command docker-container-name server-command)))
+ (format "%s exec -i %s %s" lsp-docker-command docker-container-name server-command)))
+
+(defun lsp-docker--attach-container-name-global-suffix (container-name)
+  "Attach a user-specified or a default suffix (properly changing it) to the container name"
+  (if lsp-docker-container-name-suffix
+      (format "%s-%d"
+              container-name
+              (if (numberp lsp-docker-container-name-suffix)
+                  (cl-incf lsp-docker-container-name-suffix)
+                lsp-docker-container-name-suffix))
+    container-name))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
@@ -119,14 +129,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
   "Registers docker clients with lsp"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
-        (let ((docker-container-name-full
-               (if lsp-docker-container-name-suffix
-                   (format "%s-%d"
-                           docker-container-name
-                           (if (numberp lsp-docker-container-name-suffix)
-                               (cl-incf lsp-docker-container-name-suffix)
-                             lsp-docker-container-name-suffix))
-                 docker-container-name)))
+        (let ((docker-container-name-full (lsp-docker--attach-container-name-global-suffix docker-container-name)))
           (setf (lsp--client-server-id client) docker-server-id
                 (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
                                                             path-mappings
@@ -409,6 +412,18 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
+(defun lsp-docker--generate-docker-server-container-name (config project-root)
+  "Generate the docker-container-name from the project config"
+  (let ((docker-server-id (lsp-docker-generate-docker-server-id config project-root)))
+    (if (symbolp docker-server-id)
+        (symbol-name docker-server-id)
+      docker-server-id)))
+
+(defun lsp-docker--finalize-docker-server-container-name (config-specified-server-name config project-root)
+  "Get or generate a unique (if generated) or leave config-specified server name"
+  (cond ((stringp config-specified-server-name) config-specified-server-name)
+         ('t (lsp-docker--attach-container-name-global-suffix (lsp-docker--generate-docker-server-container-name config project-root)))))
+
 (defun lsp-docker--encode-single-quoted-parameters (raw-token-command)
   "Encode single quoted tokens (with base64 encoding) so they won't be split"
   (let* ((tokens-to-encode (--remove (s-blank-str? (cadr it)) (s-match-strings-all "'\\([^']+\\)'" raw-token-command)))
@@ -507,7 +522,14 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
-(defun lsp-docker--create-building-process-sentinel (server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command)
+(defun lsp-docker--create-building-process-sentinel (
+                                                     server-id
+                                                     docker-server-id
+                                                     path-mappings
+                                                     image-name
+                                                     docker-container-name
+                                                     activation-fn
+                                                     server-command)
   `(lambda (proc _message)
      (when (eq (process-status proc) 'exit)
        (lsp-docker-register-client-with-activation-fn
@@ -516,7 +538,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
         :path-mappings ',path-mappings
         :docker-image-id ',image-name
         :docker-container-name ',docker-container-name
-        :docker-container-name-suffix nil
         :activation-fn ,activation-fn
         :priority lsp-docker-default-priority
         :server-command ',server-command
@@ -530,7 +551,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                                                   path-mappings
                                                                   docker-image-id
                                                                   docker-container-name
-                                                                  (docker-container-name-suffix lsp-docker-container-name-suffix)
                                                                   activation-fn
                                                                   priority
                                                                   server-command
@@ -565,32 +585,24 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                                               path-mappings
                                                               docker-image-id
                                                               docker-container-name
-                                                              (docker-container-name-suffix lsp-docker-container-name-suffix)
                                                               activation-fn
                                                               priority
                                                               server-command
                                                               launch-server-cmd-fn)
   "Registers docker clients with lsp (by persisting configuration)"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
-      (let ((docker-container-name-full
-             (if docker-container-name-suffix
-                 (format "%s-%d"
-                         docker-container-name
-                         (if (numberp docker-container-name-suffix)
-                             (cl-incf docker-container-name-suffix)
-                           docker-container-name-suffix))
-               docker-container-name)))
+      (progn
         (setf (lsp--client-server-id client) docker-server-id
               (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
                                                           path-mappings
-                                                          docker-container-name-full)
+                                                          docker-container-name)
               (lsp--client-activation-fn client) activation-fn
               (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
               (lsp--client-new-connection client) (plist-put
                                                    (lsp-stdio-connection
                                                     (lambda ()
                                                       (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                                               docker-container-name-full
+                                                               docker-container-name
                                                                path-mappings
                                                                docker-image-id
                                                                server-command)))
@@ -598,8 +610,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                                             t))
               (lsp--client-priority client) (or priority (lsp--client-priority client)))
         (lsp-register-client client)
-        (message "Registered a language server with id: %s and container name: %s" docker-server-id docker-container-name-full))
-    (user-error "No such client %s" server-id)))
+        (message "Registered a language server with id: %s and container name: %s" docker-server-id docker-container-name))
+  (user-error "No such client %s" server-id)))
 
 (defun lsp-docker-register ()
   "Register a server to use LSP mode in a container for the current project"
@@ -610,13 +622,14 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
              (dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp))
              (project-root (lsp-workspace-root))
              (server-type-subtype (lsp-docker-get-server-type-subtype config))
-             (server-container-name (lsp-docker-get-server-container-name config))
+             (config-specified-server-container-name (lsp-docker-get-server-container-name config))
              (server-image-name (lsp-docker-get-server-image-name config))
              (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
              (regular-server-id (lsp-docker-get-server-id config))
              (server-id (lsp-docker-generate-docker-server-id config (lsp-workspace-root)))
              (server-launch-command (lsp-docker-get-launch-command config))
-             (base-client (lsp-docker--get-base-client config)))
+             (base-client (lsp-docker--get-base-client config))
+             (server-container-name (lsp-docker--finalize-docker-server-container-name config-specified-server-container-name config project-root)))
         (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes server-type-subtype)
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
@@ -630,7 +643,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                         :path-mappings path-mappings
                                         :docker-image-id server-image-name
                                         :docker-container-name server-container-name
-                                        :docker-container-name-suffix nil
                                         :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                         :priority lsp-docker-default-priority
                                         :server-command server-launch-command
@@ -644,7 +656,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :path-mappings path-mappings
                                       :docker-image-id server-image-name
                                       :docker-container-name server-container-name
-                                      :docker-container-name-suffix nil
                                       :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                       :priority lsp-docker-default-priority
                                       :server-command server-launch-command
@@ -656,7 +667,6 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                             :path-mappings path-mappings
                                             :docker-image-id nil
                                             :docker-container-name server-container-name
-                                            :docker-container-name-suffix nil
                                             :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                             :priority lsp-docker-default-priority
                                             :server-command server-launch-command
