@@ -339,6 +339,13 @@ the docker container to run the language server."
         (intern (gethash 'server lsp-server-info))
       (gethash 'server lsp-server-info))))
 
+(defun lsp-docker--get-base-client (config)
+  "Get the base lsp client for dockerized client to be built upon"
+  (if-let* ((base-server-id (lsp-docker-get-server-id config))
+            (base-client (gethash base-server-id lsp-clients)))
+      base-client
+    (user-error "Cannot find a specified base lsp client! Please check the 'server' parameter in the config")))
+
 (defun lsp-docker-get-path-mappings (config project-directory)
   "Get the server path mappings"
   (if-let ((lsp-mappings-info (gethash 'mappings config)))
@@ -378,11 +385,23 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
            docker-container-name)
    " "))
 
-(defmacro lsp-docker-create-activation-function-by-project-dir (project-dir)
+(defun lsp-docker-create-activation-function-by-project-dir (project-dir)
   `(lambda (&rest unused)
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir))
        (f-same? current-project-root registered-project-root))))
+
+(defun lsp-docker--create-activation-function-by-project-dir-and-base-client (project-dir base-lsp-client)
+  `(lambda (current-file-name current-major-mode)
+     (let ((current-project-root (lsp-workspace-root))
+           (registered-project-root ,project-dir)
+           (base-activation-fn ,(lsp--client-activation-fn base-lsp-client))
+           (base-major-modes ,(lsp--client-major-modes base-lsp-client)))
+       (and (f-same? current-project-root registered-project-root)
+            (or (if (functionp base-activation-fn)
+                    (funcall base-activation-fn current-file-name current-major-mode)
+                  nil)
+                (-contains? base-major-modes current-major-mode))))))
 
 (defun lsp-docker-generate-docker-server-id (config project-root)
   "Generate the docker-server-id from the project config"
@@ -488,6 +507,21 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
+(defun lsp-docker--create-building-process-sentinel (server-id docker-server-id path-mappings image-name docker-container-name activation-fn server-command)
+  `(lambda (proc _message)
+     (when (eq (process-status proc) 'exit)
+       (lsp-docker-register-client-with-activation-fn
+        :server-id ',server-id
+        :docker-server-id ',docker-server-id
+        :path-mappings ',path-mappings
+        :docker-image-id ',image-name
+        :docker-container-name ',docker-container-name
+        :docker-container-name-suffix nil
+        :activation-fn ,activation-fn
+        :priority lsp-docker-default-priority
+        :server-command ',server-command
+        :launch-server-cmd-fn #'lsp-docker-launch-new-container))))
+
 (cl-defun lsp-docker--build-image-and-register-server-async (&key image-name
                                                                   dockerfile-path
                                                                   project-root
@@ -515,19 +549,14 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                  :name "lsp-docker-build"
                  :buffer (current-buffer)
                  :command build-command-decoded
-                 :sentinel `(lambda (proc _message)
-                              (when (eq (process-status proc) 'exit)
-                                (lsp-docker-register-client-with-activation-fn
-                                 :server-id ',server-id
-                                 :docker-server-id ',docker-server-id
-                                 :path-mappings ',path-mappings
-                                 :docker-image-id ',image-name
-                                 :docker-container-name ',docker-container-name
-                                 :docker-container-name-suffix nil
-                                 :activation-fn (lsp-docker-create-activation-function-by-project-dir ,project-root)
-                                 :priority lsp-docker-default-priority
-                                 :server-command ',server-command
-                                 :launch-server-cmd-fn #'lsp-docker-launch-new-container))))))
+                 :sentinel (lsp-docker--create-building-process-sentinel
+                            server-id
+                            docker-server-id
+                            path-mappings
+                            image-name
+                            docker-container-name
+                            activation-fn
+                            server-command))))
           (user-error "Cannot register a server with a missing image!"))
       (user-error "Cannot find the image %s but cannot build it too (missing Dockerfile)" image-name))))
 
@@ -586,7 +615,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
              (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
              (regular-server-id (lsp-docker-get-server-id config))
              (server-id (lsp-docker-generate-docker-server-id config (lsp-workspace-root)))
-             (server-launch-command (lsp-docker-get-launch-command config)))
+             (server-launch-command (lsp-docker-get-launch-command config))
+             (base-client (lsp-docker--get-base-client config)))
         (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes server-type-subtype)
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
@@ -601,7 +631,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                         :docker-image-id server-image-name
                                         :docker-container-name server-container-name
                                         :docker-container-name-suffix nil
-                                        :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                        :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                         :priority lsp-docker-default-priority
                                         :server-command server-launch-command
                                         :launch-server-cmd-fn #'lsp-docker-launch-new-container)
@@ -615,7 +645,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                       :docker-image-id server-image-name
                                       :docker-container-name server-container-name
                                       :docker-container-name-suffix nil
-                                      :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                      :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                       :priority lsp-docker-default-priority
                                       :server-command server-launch-command
                                       :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
@@ -627,7 +657,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                             :docker-image-id nil
                                             :docker-container-name server-container-name
                                             :docker-container-name-suffix nil
-                                            :activation-fn (lsp-docker-create-activation-function-by-project-dir (lsp-workspace-root))
+                                            :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
                                             :priority lsp-docker-default-priority
                                             :server-command server-launch-command
                                             :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
