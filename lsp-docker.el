@@ -62,7 +62,7 @@ Argument URI the uri to translate."
     (-if-let ((local . remote) (-first (-lambda ((_ . docker-path))
                                          (s-contains? docker-path path))
                                        path-mappings))
-        (s-replace remote local path)
+        (replace-regexp-in-string (format "\\(%s\\).*" remote) local path nil nil 1)
       (format "/docker:%s:%s" docker-container-name path))))
 
 (defun lsp-docker--path->uri (path-mappings path)
@@ -73,7 +73,7 @@ Argument PATH the path to translate."
    (-if-let ((local . remote) (-first (-lambda ((local-path . _))
                                         (s-contains? local-path path))
                                       path-mappings))
-       (s-replace local remote path)
+       (replace-regexp-in-string (format "\\(%s\\).*" local) remote path nil nil 1)
      (user-error "The path %s is not under path mappings" path))))
 
 
