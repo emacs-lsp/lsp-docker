@@ -484,8 +484,9 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   "Get available docker images already existing on the host"
   (-let ((
           (exit-code . raw-output)
-          (lsp-docker--run-docker-command "image list --format '{{.Repository}}'")))
+          (lsp-docker--run-docker-command "image list --format '{{.Repository}}:{{.Tag}}'")))
     (if (equal exit-code 0)
+        ;; filter out the list of tagged images from cmd output
         (--remove (s-blank? it) (--map (s-chop-suffix "'" (s-chop-prefix "'" it)) (s-lines raw-output)))
       (user-error "Cannot get the existing images list from the host, exit code: %d" exit-code))))
 
@@ -500,7 +501,10 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (defun lsp-docker--check-image-exists (image-name)
   "Check that the specified image already exists on the host"
-  (--any? (s-equals? it image-name) (lsp-docker--get-existing-images)))
+  (--any? (or (s-equals? it image-name)
+              ;; when providing an untagged image name, it is assumed to be <image-name>:latest
+              (s-equals? it (format "%s:latest" image-name)))
+          (lsp-docker--get-existing-images)))
 
 (defun lsp-docker--check-container-exists (container-name)
   "Check that the specified container already exists on the host"
@@ -630,7 +634,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
              (server-launch-command (lsp-docker-get-launch-command config))
              (base-client (lsp-docker--get-base-client config))
              (server-container-name (lsp-docker--finalize-docker-server-container-name config-specified-server-container-name config project-root)))
-        (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes server-type-subtype)
+        (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes
+                                                       server-type-subtype)
                  (lsp-docker-check-path-mappings path-mappings))
             (let ((container-type (car server-type-subtype))
                   (container-subtype (cdr server-type-subtype)))
@@ -673,7 +678,8 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                                             :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
                                          (user-error "Invalid LSP docker config: cannot find the specified container: %s" server-container-name)))
                            (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
-                (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))))
+                (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
+          (user-error "Language server registration failed, check input parameters")))
     (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
 
 (defun lsp-docker-start ()
