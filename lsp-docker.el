@@ -501,10 +501,11 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (defun lsp-docker--check-image-exists (image-name)
   "Check that the specified image already exists on the host"
-  (--any? (or (s-equals? it image-name)
-              ;; when providing an untagged image name, it is assumed to be <image-name>:latest
-              (s-equals? it (format "%s:latest" image-name)))
-          (lsp-docker--get-existing-images)))
+  ;; automatically add "latest" tag when `image-name' is an untagged image name
+  (let ((target-image (if (not (string-match "[:]" image-name))
+                          (format "%s:latest" image-name)
+                        image-name)))
+    (--any? (s-equals? it target-image) (lsp-docker--get-existing-images))))
 
 (defun lsp-docker--check-container-exists (container-name)
   "Check that the specified container already exists on the host"
