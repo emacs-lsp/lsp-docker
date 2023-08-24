@@ -118,6 +118,7 @@
        
 ** Custom language server containers     
    You can use manually built language containers or images hosting language server(s), just follow a few simple rules (shown below).
+   The docker images may feature an optional tag, if omitted _latest_ will be assumed.
    
 *** Building a container (or an image) manually:
     You have 2 constraints:
@@ -142,20 +143,32 @@
 It is structured in the following way:
 
 #+begin_src yaml
-lsp:
-  server:
-    type: docker
-    subtype: container # Or image. container subtype means launching an existing container
-    # image subtype means creating a new container each time from a specified image
-    name: not-significant-but-unique-name # Must be unique across all language servers
-    server: server-id-of-the-base-server # Server id of a registered server (by lsp-mode) 
-    launch_command: "launch command with arguments" # Launch command of the language server
-    # (selected by a server id specified above) in stdio mode
-    # Note: launch_command is not used with container subtype servers
-    # as a command is embedded in a container itself and serves as an entrypoint
-  mappings:
-    - source: "/your/host/source/path"
-      destination: "/your/local/path/inside/a/container"
+  lsp:
+    server:
+      type: docker
+      # subtype:
+      # - "container": attach to an already running container
+      # - "image": when image does not exist, try to build it based on the dockerfile found in the project-scope
+      #   (see Automatic image building). An image might feature an optional tag, i.e. '<image>:<tag>'. If a
+      #   tagless image is indicated 'latest' will be assumed.
+      subtype: container
+      # image/container name to use for this language server
+      name: image-container-name
+      # server id of a registered LSP server. You can find the list of registered servers evaluating:
+      #
+      # `(let ((keys ())) (maphash (lambda (k v) (push k keys)) lsp-clients) keys)`
+      #
+      # source:
+      # https://stackoverflow.com/questions/17066169/retrieve-keys-from-hash-table-sorted-by-the-values-efficiently
+      server: server-id-of-the-base-server
+      # command to launch the language server in stdio mode
+      # NOTE: 'launch_command' is not used with 'container' subtype servers as a command is embedded in a
+      # container itself and serves as entrypoint
+      launch_command: "launch command with arguments"
+    mappings:
+      # NOTE: the paths must be within the project this server is being build for
+      - source: "/your/host/source/path"
+        destination: "/your/path/inside/the/container"
 #+end_src
 
 *** Registering a language server using a =.dir-locals= file:
