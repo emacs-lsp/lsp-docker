@@ -664,16 +664,12 @@ output)"
                                      (lsp-docker--build-image-and-register-server-async
                                       :image-name server-image-name
                                       :dockerfile-path dockerfile-path
-                                      :project-root project-root
                                       :server-id regular-server-id
                                       :docker-server-id server-id
                                       :path-mappings path-mappings
-                                      :docker-image-id server-image-name
                                       :docker-container-name server-container-name
                                       :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
-                                      :priority lsp-docker-default-priority
-                                      :server-command server-launch-command
-                                      :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
+                                      :server-command server-launch-command)))
                            ('container (if (lsp-docker--check-container-exists server-container-name)
                                            (lsp-docker-register-client-with-activation-fn
                                             :server-id regular-server-id
