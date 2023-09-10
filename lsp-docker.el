@@ -308,11 +308,10 @@ be bigger than default servers in order to override them)")
   (ht ('docker (list 'container 'image)))
   "A list of all supported server types and subtypes, currently only docker is supported")
 
-(defun lsp-docker-get-server-type-subtype (config)
-  "Get the server type"
-  (let* ((lsp-server-info (gethash 'server config))
-         (lsp-server-type (gethash 'type lsp-server-info))
-         (lsp-server-subtype (gethash 'subtype lsp-server-info)))
+(defun lsp-docker-get-server-type-subtype (server-config)
+  "Get the server type & sub-type from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-type (gethash 'type server-config))
+         (lsp-server-subtype (gethash 'subtype server-config)))
     (cons (if (stringp lsp-server-type)
               (intern lsp-server-type)
             lsp-server-type)
@@ -320,31 +319,28 @@ be bigger than default servers in order to override them)")
               (intern lsp-server-subtype)
             lsp-server-subtype))))
 
-(defun lsp-docker-get-server-container-name (config)
-  "Get the server container name"
-  (let* ((lsp-server-info (gethash 'server config))
-         (lsp-server-subtype (gethash 'subtype lsp-server-info)))
+(defun lsp-docker-get-server-container-name (server-config)
+  "Get the server container name from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-subtype (gethash 'subtype server-config)))
     (if (equal lsp-server-subtype "container")
-        (gethash 'name lsp-server-info))))
+        (gethash 'name server-config))))
 
-(defun lsp-docker-get-server-image-name (config)
-  "Get the server image name"
-  (let* ((lsp-server-info (gethash 'server config))
-         (lsp-server-subtype (gethash 'subtype lsp-server-info)))
+(defun lsp-docker-get-server-image-name (server-config)
+  "Get the server image name from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-subtype (gethash 'subtype server-config)))
     (if (equal lsp-server-subtype "image")
-        (gethash 'name lsp-server-info))))
+        (gethash 'name server-config))))
 
-(defun lsp-docker-get-server-id (config)
-  "Get the server id"
-  (let ((lsp-server-info (gethash 'server config)))
-    (if (stringp (gethash 'server lsp-server-info))
-        (intern (gethash 'server lsp-server-info))
-      (gethash 'server lsp-server-info))))
+(defun lsp-docker-get-server-id (server-config)
+  "Get the server id from the SERVER-CONFIG hash-table"
+  (if (stringp (gethash 'server server-config))
+      (intern (gethash 'server server-config))
+    (gethash 'server server-config)))
 
-(defun lsp-docker--get-base-client (config)
-  "Get the base lsp client for dockerized client to be built upon"
-  (if-let* ((base-server-id (lsp-docker-get-server-id config))
-            (base-client (gethash base-server-id lsp-clients)))
+(defun lsp-docker--get-base-client (base-server-id)
+  "Get the base lsp client associated to BASE-SERVER-ID key for
+dockerized client to be built upon"
+  (if-let* ((base-client (gethash base-server-id lsp-clients)))
       base-client
     (user-error "Cannot find a specified base lsp client!
 Make sure the 'server' sub-key is set to one of the lsp registered clients")))
@@ -358,10 +354,9 @@ Make sure the 'server' sub-key is set to one of the lsp registered clients")))
              lsp-mappings-info)
     (user-error "No path mappings specified!")))
 
-(defun lsp-docker-get-launch-command (config)
-  "Get the server launch command"
-  (let ((lsp-server-info (gethash 'server config)))
-    (gethash 'launch_command lsp-server-info)))
+(defun lsp-docker-get-launch-command (server-config)
+  "Get the server launch command from the SERVER-CONFIG hash-table"
+  (gethash 'launch_command server-config))
 
 (defun lsp-docker-check-server-type-subtype (supported-server-types-subtypes server-type-subtype)
   "Verify that the combination of server (type . subtype) is supported by the current implementation"
