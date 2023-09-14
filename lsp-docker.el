@@ -639,7 +639,7 @@ dockerized server."
          (regular-server-id (lsp-docker-get-server-id server-config))
          (server-id (lsp-docker-generate-docker-server-id server-config (lsp-workspace-root)))
          (server-launch-command (lsp-docker-get-launch-command server-config))
-         (base-client (lsp-docker--get-base-client server-id))
+         (base-client (lsp-docker--get-base-client regular-server-id))
          (activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client
                          (lsp-workspace-root)
                          base-client))
@@ -715,8 +715,7 @@ dockerized server."
                   path-mappings)
                  (lsp-docker--get-ht-keys multi-server-config)))
          (t
-          (user-error "no 'server' neither 'multi-server' keyword found in configuration file")))
-        )
+          (user-error "no 'server' neither 'multi-server' keyword found in configuration file"))))
     (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
 
 (defun lsp-docker-start ()
