@@ -346,7 +346,7 @@ dockerized client to be built upon"
 Make sure the 'server' sub-key is set to one of the lsp registered clients")))
 
 (defun lsp-docker-get-path-mappings (config project-directory)
-  "Get the server path mappings"
+  "Get the server path mappings from the top project hash-table CONFIG"
   (if-let ((lsp-mappings-info (gethash 'mappings config)))
       (--map (cons (f-canonical (f-expand (gethash 'source it)
                                           project-directory))
@@ -404,23 +404,28 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                   nil)
                 (-contains? base-major-modes current-major-mode))))))
 
-(defun lsp-docker-generate-docker-server-id (config project-root)
-  "Generate the docker-server-id from the project config"
-  (let ((original-server-id (symbol-name (lsp-docker-get-server-id config)))
+(defun lsp-docker-generate-docker-server-id (server-config project-root)
+  "Generate the docker-server-id from the SERVER-CONFIG"
+  (let ((original-server-id (symbol-name (lsp-docker-get-server-id server-config)))
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
-(defun lsp-docker--generate-docker-server-container-name (config project-root)
-  "Generate the docker-container-name from the project config"
-  (let ((docker-server-id (lsp-docker-generate-docker-server-id config project-root)))
+(defun lsp-docker--generate-docker-server-container-name (server-config project-root)
+  "Generate the docker-container-name from the SERVER-CONFIG"
+  (let ((docker-server-id (lsp-docker-generate-docker-server-id server-config project-root)))
     (if (symbolp docker-server-id)
         (symbol-name docker-server-id)
       docker-server-id)))
 
-(defun lsp-docker--finalize-docker-server-container-name (config-specified-server-name config project-root)
-  "Get or generate a unique (if generated) or leave config-specified server name"
+(defun lsp-docker--finalize-docker-server-container-name (config-specified-server-name server-config project-root)
+  "Get or generate the container name.
+
+If CONFIG-SPECIFIED-SERVER-NAME is non-nil, return it as
+container name. Otherwise generate a unique container name from
+SERVER-CONFIG and PROJECT-ROOT.
+"
   (cond ((stringp config-specified-server-name) config-specified-server-name)
-         ('t (lsp-docker--attach-container-name-global-suffix (lsp-docker--generate-docker-server-container-name config project-root)))))
+         ('t (lsp-docker--attach-container-name-global-suffix (lsp-docker--generate-docker-server-container-name server-config project-root)))))
 
 (defun lsp-docker--encode-single-quoted-parameters (raw-token-command)
   "Encode single quoted tokens (with base64 encoding) so they won't be split"
