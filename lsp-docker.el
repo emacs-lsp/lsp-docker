@@ -49,13 +49,6 @@
   :group 'lsp-docker
   :type 'string)
 
-(defun lsp-docker--get-ht-keys (hash-table)
-  "Return the list of keys found in the given HASH-TABLE."
-  (let ((keys ()))
-    (maphash (lambda (k _) (push k keys))
-             hash-table)
-    keys))
-
 (defun lsp-docker--log-docker-supplemental-calls-p ()
   "Return non-nil if should log docker invocation commands"
   lsp-docker-log-docker-supplemental-calls)

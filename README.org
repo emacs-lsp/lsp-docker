@@ -160,7 +160,7 @@ It is structured in the following way:
       name: image-container-name
       # server id of a registered LSP server. You can find the list of registered servers evaluating:
       #
-      # `(let ((keys ())) (maphash (lambda (k v) (push k keys)) lsp-clients) keys)`
+      # `(ht-keys lsp-clients)`
       #
       # source:
       # https://stackoverflow.com/questions/17066169/retrieve-keys-from-hash-table-sorted-by-the-values-efficiently
