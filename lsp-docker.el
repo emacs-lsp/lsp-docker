@@ -150,7 +150,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
                                                             path-mappings
                                                             uri))
                 (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
-                (lsp--client-new-connection client) ( list
+                (lsp--client-new-connection client) (list
                                                       :connect (lambda (filter sentinel name environment-fn workspace)
                                                         (let* ((docker-container-name-full
                                                               (lsp-docker--attach-container-name-global-suffix docker-container-name))
