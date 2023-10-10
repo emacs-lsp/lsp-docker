@@ -166,9 +166,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
                                                           (puthash (lsp--workspace-root workspace)
                                                                    docker-container-name-full
                                                                    root-name-map)
-                      1                                    (funcall connect-fun filter sentinel name environment-fn workspace)
-                                                          )
-                                                        )
+                      1                                   (funcall connect-fun filter sentinel name environment-fn workspace)))
                                                       :test? (lambda (&rest _)
                                                               (-any?
                                                                (-lambda ((dir))
