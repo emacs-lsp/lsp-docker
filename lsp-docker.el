@@ -560,7 +560,15 @@ output)"
                                                                   path-mappings
                                                                   docker-container-name
                                                                   activation-fn
-                                                                  server-command)
+                                                                  server-command
+                                                                  ;; TODO: keep these inputs for future feature
+                                                                  ;; implementation, see
+                                                                  ;; https://github.com/sfavazza/lsp-docker/pull/1#discussion_r1367081991
+                                                                  ;; project-root
+                                                                  ;; docker-image-id
+                                                                  ;; priority
+                                                                  ;; launch-server-cmd-fn
+                                                                  )
   "Build an image asynchronously and register it afterwards"
   (unless (lsp-docker--check-image-exists image-name) ;; Check again whether we have to build a new image
     (if dockerfile-path
