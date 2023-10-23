@@ -49,6 +49,12 @@
   :group 'lsp-docker
   :type 'string)
 
+(defconst lsp-docker--single-server-yml-key 'server
+  "single-server YAML key, if matched it is assumed a single language server is being configured")
+
+(defconst lsp-docker--multi-server-yml-key 'multi-server
+  "multi-server YAML key, if matched it is assumed multiple language servers are being configured")
+
 (defun lsp-docker--log-docker-supplemental-calls-p ()
   "Return non-nil if should log docker invocation commands"
   lsp-docker-log-docker-supplemental-calls)
@@ -252,14 +258,14 @@ the docker container to run the language server."
 be bigger than default servers in order to override them)")
 
 (defcustom lsp-docker-persistent-default-config
-  (ht ('server (ht ('type "docker")
-                  ('subtype "image")
-                  ('name "emacslsp/lsp-docker-langservers")
-                  ('server nil)
-                  ('launch_command nil)))
+  (ht (lsp-docker--single-server-yml-key (ht ('type "docker")
+                                             ('subtype "image")
+                                             ('name "emacslsp/lsp-docker-langservers")
+                                             ('server nil)
+                                             ('launch_command nil)))
       ('mappings (vector
                   (ht ('source ".")
-                    ('destination "/projects")))))
+                      ('destination "/projects")))))
   "Default configuration for all language servers with persistent configurations"
   :type 'hash-table
   :group 'lsp-docker)
@@ -268,8 +274,13 @@ be bigger than default servers in order to override them)")
   "Get the LSP configuration based on a project configuration file"
   (if (f-exists? project-config-file-path)
       (if-let* ((whole-config (yaml-parse-string (f-read project-config-file-path)))
-               (lsp-config (gethash 'lsp whole-config)))
-          (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))
+                (lsp-config (gethash 'lsp whole-config)))
+          (cond
+           ;; DO NOT merge to the persistent configuration when a multi-server one is detected
+           ((gethash lsp-docker--multi-server-yml-key lsp-config)
+            lsp-config)
+           (t                           ; use default values for missing fields in the provided configuration
+            (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))))
 
 (defun lsp-docker--find-project-config-file-from-lsp ()
   "Get the LSP configuration file path (project-local configuration, using lsp-mode)"
@@ -335,9 +346,9 @@ be bigger than default servers in order to override them)")
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
-  (if (stringp (gethash 'server server-config))
-      (intern (gethash 'server server-config))
-    (gethash 'server server-config)))
+  (if (stringp (gethash lsp-docker--single-server-yml-key server-config))
+      (intern (gethash lsp-docker--single-server-yml-key server-config))
+    (gethash lsp-docker--single-server-yml-key server-config)))
 
 (defun lsp-docker--get-base-client (base-server-id)
   "Get the base lsp client associated to BASE-SERVER-ID key for
@@ -345,7 +356,8 @@ dockerized client to be built upon"
   (if-let* ((base-client (gethash base-server-id lsp-clients)))
       base-client
     (user-error "Cannot find a specified base lsp client!
-Make sure the 'server' sub-key is set to one of the lsp registered clients")))
+Make sure the '%s' sub-key is set to one of the lsp registered clients"
+                lsp-docker--single-server-yml-key)))
 
 (defun lsp-docker-get-path-mappings (config project-directory)
   "Get the server path mappings from the top project hash-table CONFIG"
@@ -704,8 +716,8 @@ dockerized server."
              (config (lsp-docker-get-config-from-lsp))
              (project-root (lsp-workspace-root))
              (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
-             (single-server-config (gethash 'server config))
-             (multi-server-config (gethash 'multi-server config)))
+             (single-server-config (gethash lsp-docker--single-server-yml-key config))
+             (multi-server-config (gethash lsp-docker--multi-server-yml-key config)))
 
         ;; check whether a single or multiple servers are described in the configuration
         (cond
@@ -726,10 +738,12 @@ dockerized server."
                   (gethash it multi-server-config)
                   project-root
                   path-mappings)
-                 (lsp-docker--get-ht-keys multi-server-config)))
+                 (ht-keys multi-server-config)))
          (t
-          (user-error "no 'server' neither 'multi-server' keywords found in configuration file"))))
-    (user-error
+          (user-error "no '%s' neither '%s' keywords found in configuration file"
+                      lsp-docker--single-server-yml-key
+                      lsp-docker--multi-server-yml-key))))
+   (user-error
      (format (concat "Current file: %s is not in a registered project! "
                      "Try adding your project with `lsp-workspace-folders-add'")
       (buffer-file-name)))))
