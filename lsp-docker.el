@@ -301,8 +301,10 @@ be bigger than default servers in order to override them)")
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
   (let ((project-config-file-path (lsp-docker--find-project-config-file-from-lsp)))
-    (or (lsp-docker-get-config-from-project-config-file project-config-file-path)
-        (ht-copy lsp-docker-persistent-default-config))))
+    (if project-config-file-path
+        (or (lsp-docker-get-config-from-project-config-file project-config-file-path)
+            (ht-copy lsp-docker-persistent-default-config))
+      (user-error "cannot find LSP configuration file project, refer to the documentation"))))
 
 (defvar lsp-docker-supported-server-types-subtypes
   (ht ('docker (list 'container 'image)))
@@ -632,7 +634,7 @@ output)"
 
 Its description is provided via the SERVER-CONFIG hash-table. It
 must represents the fields defined under the `server' (single
-server configuration) or `servers/<dockerized-server-name>'
+server configuration) or `multi-server/<dockerized-server-name>'
 (multi-server configuration) node. The PROJECT-ROOT must be a
 path pointing to the top-level folder of the project the
 configuration file resides into. The PATH-MAPPINGS provides a
@@ -708,6 +710,12 @@ dockerized server."
         ;; check whether a single or multiple servers are described in the configuration
         (cond
          (single-server-config
+          (if (and single-server-config multi-server-config)
+              (display-warning "lsp-docker"
+                               (concat "both single/multiple server configuration detected, "
+                                       "ignoring multi-server configuration")
+                               :warning
+                               "*Warnings lsp-docker*"))
           (message "registering a single server")
           (lsp-docker--register-single-server single-server-config project-root path-mappings))
 
@@ -720,8 +728,11 @@ dockerized server."
                   path-mappings)
                  (lsp-docker--get-ht-keys multi-server-config)))
          (t
-          (user-error "no 'server' neither 'multi-server' keyword found in configuration file"))))
-    (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
+          (user-error "no 'server' neither 'multi-server' keywords found in configuration file"))))
+    (user-error
+     (format (concat "Current file: %s is not in a registered project! "
+                     "Try adding your project with `lsp-workspace-folders-add'")
+      (buffer-file-name)))))
 
 (defun lsp-docker-start ()
   "Register and launch a server to use LSP mode in a container for the current project"
