@@ -251,19 +251,21 @@ the docker container to run the language server."
   "Default lsp-docker containerized servers priority (it needs to be bigger than default servers in order to override them)")
 
 (defcustom lsp-docker-persistent-default-config
-  (ht ('server (ht ('type "docker")
-                   ('subtype "image")
-                   ('name "emacslsp/lsp-docker-langservers")
-                   ('server nil)
-                   ('launch_command nil)))
-      ('mappings [
-                  (ht ('source ".")
-                      ('destination "/projects"))
-                  ]))
+  (-doto (ht)
+    (ht-set! 'server
+             (-doto (ht)
+               (ht-set! 'type "docker")
+               (ht-set! 'subtype "image")
+               (ht-set! 'name "emacslsp/lsp-docker-langservers")
+               (ht-set! 'server nil)
+               (ht-set! 'launch_command nil)))
+    (ht-set! 'mappings
+             (vector (-doto (ht)
+                       (ht-set! 'source ".")
+                       (ht-set! 'destination "/projects")))))
   "Default configuration for all language servers with persistent configurations"
   :type 'hash-table
-  :group 'lsp-docker
-)
+  :group 'lsp-docker)
 
 (defun lsp-docker-get-config-from-project-config-file (project-config-file-path)
   "Get the LSP configuration based on a project configuration file"
