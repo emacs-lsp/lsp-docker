@@ -49,9 +49,18 @@
   :group 'lsp-docker
   :type 'string)
 
+;; top node keys
+(defconst lsp-docker--lsp-key 'lsp
+  "Main key associated to the root-node of the containerized language servers")
+
+;; 1st sub-node keys
 (defconst lsp-docker--server-key 'server
   "LSP sub-key holding a single (or a group of) server(s)")
+(defconst lsp-docker--mappings-key 'mappings
+  "Collection of mappings between host-paths and
+containerized-paths (host paths must be within the project)")
 
+;; 2nd sub-node keys
 ;; supported keys in YAML configuration file(s)
 (defconst lsp-docker--srv-cfg-type-key 'type
   "The type of server (at the moment only `docker' is supported).")
@@ -282,10 +291,10 @@ be bigger than default servers in order to override them)")
                                   (lsp-docker--srv-cfg-subtype-key "image")
                                   (lsp-docker--srv-cfg-name-key "emacslsp/lsp-docker-langservers")
                                   (lsp-docker--srv-cfg-server-key nil)
-                                  ('launch_command nil)))
-      ('mappings (vector
-                  (ht ('source ".")
-                      ('destination "/projects")))))
+                                  (lsp-docker--srv-cfg-launch-command-key nil)))
+      (lsp-docker--mappings-key (vector
+                                 (ht ('source ".")
+                                     ('destination "/projects")))))
   "Default configuration for all language servers with persistent configurations"
   :type 'hash-table
   :group 'lsp-docker)
@@ -294,7 +303,7 @@ be bigger than default servers in order to override them)")
   "Get the LSP configuration based on a project configuration file"
   (if (f-exists? project-config-file-path)
       (if-let* ((whole-config (yaml-parse-string (f-read project-config-file-path)))
-                (lsp-config (gethash 'lsp whole-config)))
+                (lsp-config (gethash lsp-docker--lsp-key whole-config)))
           (cond
            ;; DO NOT merge to the persistent configuration when a multi-server one is detected
            ((gethash lsp-docker--multi-server-yml-key lsp-config)
@@ -373,7 +382,7 @@ Make sure the '%s' sub-key is set to one of the lsp registered clients:\n\n%s"
 
 (defun lsp-docker-get-path-mappings (config project-directory)
   "Get the server path mappings from the top project hash-table CONFIG"
-  (if-let ((lsp-mappings-info (gethash 'mappings config)))
+  (if-let ((lsp-mappings-info (gethash lsp-docker--mappings-key config)))
       (--map (cons (f-canonical (f-expand (gethash 'source it)
                                           project-directory))
                    (gethash 'destination it))
@@ -382,7 +391,7 @@ Make sure the '%s' sub-key is set to one of the lsp registered clients:\n\n%s"
 
 (defun lsp-docker-get-launch-command (server-config)
   "Get the server launch command from the SERVER-CONFIG hash-table"
-  (gethash 'launch_command server-config))
+  (gethash lsp-docker--srv-cfg-launch-command-key server-config))
 
 (defun lsp-docker-check-server-type-subtype (supported-server-types-subtypes server-type-subtype)
   "Verify that the combination of server (type . subtype) is supported by the current implementation"
