@@ -754,11 +754,10 @@ dockerized server."
          (multi-server-config
           (message "registering multiple servers")
           (--map (lsp-docker--register-single-server
-                  ;; get per-dockerized-server configuration
-                  (gethash it multi-server-config)
+                  it
                   project-root
                   path-mappings)
-                 (ht-keys multi-server-config)))
+                 multi-server-config))
          (t
           (user-error "no '%s' neither '%s' keywords found in configuration file"
                       lsp-docker--server-key
