@@ -81,9 +81,6 @@ registered servers evaluating: `(ht-keys lsp-clients)'.")
 not used when the `lsp-docker--srv-cfg-subtype-key' is set to
 container, as the server command shall be the entrypoint.")
 
-(defconst lsp-docker--multi-server-yml-key 'multi-server
-  "multi-server YAML key, if matched it is assumed multiple language servers are being configured")
-
 (defun lsp-docker--log-docker-supplemental-calls-p ()
   "Return non-nil if should log docker invocation commands"
   lsp-docker-log-docker-supplemental-calls)
@@ -304,12 +301,10 @@ be bigger than default servers in order to override them)")
   (if (f-exists? project-config-file-path)
       (if-let* ((whole-config (yaml-parse-string (f-read project-config-file-path)))
                 (lsp-config (gethash lsp-docker--lsp-key whole-config)))
-          (cond
-           ;; DO NOT merge to the persistent configuration when a multi-server one is detected
-           ((gethash lsp-docker--multi-server-yml-key lsp-config)
-            lsp-config)
-           (t                           ; use default values for missing fields in the provided configuration
-            (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))))
+          ;; use default values for missing fields in the provided configuration
+          (if (vectorp (gethash lsp-docker--server-key lsp-config))
+            lsp-config        ; DO NOT merge to the persistent configuration when a multi-server one is detected
+            (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config)))))
 
 (defun lsp-docker--find-project-config-file-from-lsp ()
   "Get the LSP configuration file path (project-local configuration, using lsp-mode)"
@@ -367,9 +362,7 @@ be bigger than default servers in order to override them)")
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
-  (if (stringp (gethash lsp-docker--srv-cfg-server-key server-config))
-      (intern (gethash lsp-docker--srv-cfg-server-key server-config))
-    (gethash lsp-docker--srv-cfg-server-key server-config)))
+  (gethash lsp-docker--srv-cfg-server-key server-config))
 
 (defun lsp-docker--get-base-client (base-server-id)
   "Get the base lsp client associated to BASE-SERVER-ID key for
@@ -732,36 +725,29 @@ dockerized server."
   "Register one or more dockerized language servers for the current project"
   (interactive)
   (if (lsp-workspace-root)
-      (let* (
-             (config (lsp-docker-get-config-from-lsp))
+      (let* ((config (lsp-docker-get-config-from-lsp))
              (project-root (lsp-workspace-root))
              (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
-             (single-server-config (gethash lsp-docker--server-key config))
-             (multi-server-config (gethash lsp-docker--multi-server-yml-key config)))
+             (server-config (gethash lsp-docker--server-key config)))
 
         ;; check whether a single or multiple servers are described in the configuration
         (cond
-         (single-server-config
-          (if (and single-server-config multi-server-config)
-              (display-warning "lsp-docker"
-                               (concat "both single/multiple server configuration detected, "
-                                       "ignoring multi-server configuration")
-                               :warning
-                               "*Warnings lsp-docker*"))
-          (message "registering a single server")
-          (lsp-docker--register-single-server single-server-config project-root path-mappings))
-
-         (multi-server-config
+         ((vectorp server-config)
           (message "registering multiple servers")
-          (--map (lsp-docker--register-single-server
-                  it
-                  project-root
-                  path-mappings)
-                 multi-server-config))
+          ;; NOTE: if multiple language server descriptions share the same name "server" field, the latest entry
+          ;; will be enforced.
+          (--map (lsp-docker--register-single-server it
+                                                     project-root
+                                                     path-mappings)
+                 server-config))
+         (server-config
+          (message "registering a single server")
+          (lsp-docker--register-single-server server-config
+                                              project-root
+                                              path-mappings))
          (t
-          (user-error "no '%s' neither '%s' keywords found in configuration file"
-                      lsp-docker--server-key
-                      lsp-docker--multi-server-yml-key))))
+          (user-error "no `%s' node found in configuration, see README for reference"
+                      lsp-docker--server-key))))
    (user-error
      (format (concat "Current file: %s is not in a registered project! "
                      "Try adding your project with `lsp-workspace-folders-add'")
