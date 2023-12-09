@@ -49,8 +49,28 @@
   :group 'lsp-docker
   :type 'string)
 
-(defconst lsp-docker--single-server-yml-key 'server
-  "single-server YAML key, if matched it is assumed a single language server is being configured")
+(defconst lsp-docker--server-key 'server
+  "LSP sub-key holding a single (or a group of) server(s)")
+
+;; supported keys in YAML configuration file(s)
+(defconst lsp-docker--srv-cfg-type-key 'type
+  "The type of server (at the moment only `docker' is supported).")
+(defconst lsp-docker--srv-cfg-subtype-key 'subtype
+  "For type container it can be:
+- `container': attach to an already running container
+- `image': when the image does not exist, try to build it based on the dockerfile
+  found in the project-scope An image might feature an optional tag, i.e.
+  `<image>:<tag>'. the If a tagless image is indicated `latest' will be assumed")
+(defconst lsp-docker--srv-cfg-name-key 'name
+  "Depending on the `lsp-docker--srv-cfg-subtype-key' it holds the
+name of the container/image for the described language server.")
+(defconst lsp-docker--srv-cfg-server-key 'server
+  "Server ID of a registered LSP server. You can find the list of
+registered servers evaluating: `(ht-keys lsp-clients)'.")
+(defconst lsp-docker--srv-cfg-launch-command-key 'launch_command
+  "Command to launch the language server in stdio mode. This key is
+not used when the `lsp-docker--srv-cfg-subtype-key' is set to
+container, as the server command shall be the entrypoint.")
 
 (defconst lsp-docker--multi-server-yml-key 'multi-server
   "multi-server YAML key, if matched it is assumed multiple language servers are being configured")
@@ -258,11 +278,11 @@ the docker container to run the language server."
 be bigger than default servers in order to override them)")
 
 (defcustom lsp-docker-persistent-default-config
-  (ht (lsp-docker--single-server-yml-key (ht ('type "docker")
-                                             ('subtype "image")
-                                             ('name "emacslsp/lsp-docker-langservers")
-                                             ('server nil)
-                                             ('launch_command nil)))
+  (ht (lsp-docker--server-key (ht (lsp-docker--srv-cfg-type-key "docker")
+                                  (lsp-docker--srv-cfg-subtype-key "image")
+                                  (lsp-docker--srv-cfg-name-key "emacslsp/lsp-docker-langservers")
+                                  (lsp-docker--srv-cfg-server-key nil)
+                                  ('launch_command nil)))
       ('mappings (vector
                   (ht ('source ".")
                       ('destination "/projects")))))
@@ -323,8 +343,8 @@ be bigger than default servers in order to override them)")
 
 (defun lsp-docker-get-server-type-subtype (server-config)
   "Get the server type & sub-type from the SERVER-CONFIG hash-table"
-  (let* ((lsp-server-type (gethash 'type server-config))
-         (lsp-server-subtype (gethash 'subtype server-config)))
+  (let* ((lsp-server-type (gethash lsp-docker--srv-cfg-type-key server-config))
+         (lsp-server-subtype (gethash lsp-docker--srv-cfg-subtype-key server-config)))
     (cons (if (stringp lsp-server-type)
               (intern lsp-server-type)
             lsp-server-type)
@@ -346,9 +366,9 @@ be bigger than default servers in order to override them)")
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
-  (if (stringp (gethash lsp-docker--single-server-yml-key server-config))
-      (intern (gethash lsp-docker--single-server-yml-key server-config))
-    (gethash lsp-docker--single-server-yml-key server-config)))
+  (if (stringp (gethash lsp-docker--srv-cfg-server-key server-config))
+      (intern (gethash lsp-docker--srv-cfg-server-key server-config))
+    (gethash lsp-docker--srv-cfg-server-key server-config)))
 
 (defun lsp-docker--get-base-client (base-server-id)
   "Get the base lsp client associated to BASE-SERVER-ID key for
@@ -356,8 +376,8 @@ dockerized client to be built upon"
   (if-let* ((base-client (gethash base-server-id lsp-clients)))
       base-client
     (user-error "Cannot find a specified base lsp client!
-Make sure the '%s' sub-key is set to one of the lsp registered clients"
-                lsp-docker--single-server-yml-key)))
+Make sure the '%s' sub-key is set to one of the lsp registered clients:\n\n%s"
+                lsp-docker--srv-cfg-type-key (ht-keys lsp-clients))))
 
 (defun lsp-docker-get-path-mappings (config project-directory)
   "Get the server path mappings from the top project hash-table CONFIG"
@@ -716,7 +736,7 @@ dockerized server."
              (config (lsp-docker-get-config-from-lsp))
              (project-root (lsp-workspace-root))
              (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
-             (single-server-config (gethash lsp-docker--single-server-yml-key config))
+             (single-server-config (gethash lsp-docker--server-key config))
              (multi-server-config (gethash lsp-docker--multi-server-yml-key config)))
 
         ;; check whether a single or multiple servers are described in the configuration
@@ -741,7 +761,7 @@ dockerized server."
                  (ht-keys multi-server-config)))
          (t
           (user-error "no '%s' neither '%s' keywords found in configuration file"
-                      lsp-docker--single-server-yml-key
+                      lsp-docker--server-key
                       lsp-docker--multi-server-yml-key))))
    (user-error
      (format (concat "Current file: %s is not in a registered project! "
