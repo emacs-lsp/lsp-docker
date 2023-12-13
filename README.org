@@ -119,11 +119,11 @@
        #+begin_src bash
        EMACS_D_VOLUME=/path/to/spacemacs bash start-spacemacs.sh
        #+end_src
-       
-** Custom language server containers     
+
+** Custom language server containers
    You can use manually built language containers or images hosting language server(s), just follow a few simple rules (shown below).
    The docker images may feature an optional tag, if omitted _latest_ will be assumed.
-   
+
 *** Building a container (or an image) manually:
     You have 2 constraints:
     - A language server must be launched in =stdio= mode (other types of communication are yet to be supported)
@@ -147,6 +147,7 @@
 It is structured in the following way:
 
 #+begin_src yaml
+  # signle server configuration
   lsp:
     server:
       type: docker
@@ -156,7 +157,7 @@ It is structured in the following way:
       #   (see Automatic image building). An image might feature an optional tag, i.e. '<image>:<tag>'. If a
       #   tagless image is indicated 'latest' will be assumed.
       subtype: container
-      # image/container name to use for this language server
+      # Image/container name to use for this language server.
       name: image-container-name
       # server id of a registered LSP server. You can find the list of registered servers evaluating:
       #
@@ -173,14 +174,26 @@ It is structured in the following way:
       # NOTE: the paths must be within the project this server is being build for
       - source: "/your/host/source/path"
         destination: "/your/path/inside/the/container"
+
+  # multiple server configuration
+  lsp:
+    server:
+      - type: ...
+        subtype: ...
+        ...                       # keys as in the classic single server case, e.g. type, subtype, etc...
+      - ...                       # other single server configuration(s)
+    mappings:
+      - source: <path-on-host>
+        destination: <path-on-lang-server>
+      ...                         # other mappings
 #+end_src
 
 *** Registering a language server using a =.dir-locals= file:
     Just refer to the source code and general conventions of using =.dir-locals=. The variable you need is =lsp-docker-persistent-default-config=, its content is merged with the =lsp= section from a configuration file (if present).
-    
+
 *** Automatic image building:
     You can also build an image automatically (currently supported only for =image= subtype): just drop the corresponding =Dockerfile= into the =.lsp-docker= folder in the project root (=Dockerfile= may be named as =Dockerfile= or =Dockerfile.lsp=). Building process is triggered by the =lsp-docker-register= call (you will be prompted whether you want to build the image). Image building *takes place in the project root* (*not* in the =.lsp-docker= subfolder)! In case of an automatic build the image will be registered automatically (based on the values from the config or =.dir-locals= file).
-    
+
     You can also troubleshoot any issues with supplemental docker calls (checking whether the required image already exists, building a new image) using the supplemental logging functionality: there are 2 variables: first you have to set =lsp-docker-log-docker-supplemental-calls= to true-like value (by default it is =nil=) and then specify the log buffer in the =lsp-docker-log-docker-supplemental-calls-buffer-name= variable (by default it is set to =*lsp-docker-supplemental-calls*=)
 
 ** Docker over TRAMP (TBD)
