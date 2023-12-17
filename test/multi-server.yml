@@ -1,0 +1,15 @@
+lsp:
+  server:
+    - type: docker
+      subtype: container
+      name: "test-pylspService-1"
+      server: "pylsp"
+      # if the same nothing bad happens
+    - type: docker
+      subtype: image
+      name: "lsp-image:test"
+      server: "clangd"
+      launch_command: "clangd"
+  mappings:
+    - source: "."
+      destination: "/code"

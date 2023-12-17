@@ -1,0 +1,14 @@
+# Recipe to start the test container as expected by lsp-docker
+services:
+  pylspService:
+    depends_on:
+      buildClangdImage:
+        condition: service_completed_successfully
+    image: lsp-image:test
+    stdin_open: true
+    entrypoint: pylsp
+    volumes:
+      - .:/code
+  buildClangdImage:
+    image: lsp-image:test
+    build: .

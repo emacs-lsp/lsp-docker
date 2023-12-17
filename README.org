@@ -182,7 +182,7 @@ It is structured in the following way:
         subtype: ...
         ...                       # keys as in the classic single server case, e.g. type, subtype, etc...
       - ...                       # other single server configuration(s)
-    mappings:
+    mappings:                     # shared among each server
       - source: <path-on-host>
         destination: <path-on-lang-server>
       ...                         # other mappings
