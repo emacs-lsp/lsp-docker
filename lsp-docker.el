@@ -362,7 +362,10 @@ be bigger than default servers in order to override them)")
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
-  (gethash lsp-docker--srv-cfg-server-key server-config))
+  (let ((server-id (gethash lsp-docker--srv-cfg-server-key server-config)))
+    (if (stringp server-id)
+        (intern server-id)
+      server-id)))
 
 (defun lsp-docker--get-base-client (base-server-id)
   "Get the base lsp client associated to BASE-SERVER-ID key for
