@@ -356,9 +356,18 @@ be bigger than default servers in order to override them)")
               (intern lsp-server-subtype)
             lsp-server-subtype))))
 
-(defun lsp-docker-get-server-container/image-name (server-config)
-  "Get the server container/image name from the SERVER-CONFIG hash-table"
-  (gethash lsp-docker--srv-cfg-name-key server-config))
+(defun lsp-docker-get-server-container-name (server-config)
+  "Get the server container name from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-subtype (gethash 'subtype server-config)))
+    (if (equal lsp-server-subtype "container")
+        (gethash 'name server-config))))
+
+(defun lsp-docker-get-server-image-name (server-config)
+  "Get the server image name from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-subtype (gethash 'subtype server-config)))
+    (if (equal lsp-server-subtype "image")
+        (gethash 'name server-config))))
+
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
@@ -670,7 +679,8 @@ configuration file resides into. The PATH-MAPPINGS provides a
 hash-table to translate the paths between the host and the
 dockerized server."
   (let* ((server-type-subtype (lsp-docker-get-server-type-subtype server-config))
-         (server-container/image-name (lsp-docker-get-server-container/image-name server-config))
+         (config-specified-server-container-name (lsp-docker-get-server-container-name server-config))
+         (server-image-name (lsp-docker-get-server-image-name server-config))
          (regular-server-id (lsp-docker-get-server-id server-config))
          (server-id (lsp-docker-generate-docker-server-id server-config (lsp-workspace-root)))
          (server-launch-command (lsp-docker-get-launch-command server-config))
@@ -679,7 +689,7 @@ dockerized server."
                          (lsp-workspace-root)
                          base-client))
          (server-container-name (lsp-docker--finalize-docker-server-container-name
-                                 server-container/image-name server-config project-root)))
+                                 config-specified-server-container-name server-config project-root)))
 
     (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes
                                                    server-type-subtype)
@@ -688,19 +698,19 @@ dockerized server."
               (container-subtype (cdr server-type-subtype)))
           (pcase container-type
             ('docker (pcase container-subtype
-                       ('image (if (lsp-docker--check-image-exists server-container/image-name)
+                       ('image (if (lsp-docker--check-image-exists server-image-name)
                                    (lsp-docker-register-client-with-activation-fn
                                     :server-id regular-server-id
                                     :docker-server-id server-id
                                     :path-mappings path-mappings
-                                    :docker-image-id server-container/image-name
+                                    :docker-image-id server-image-name
                                     :docker-container-name server-container-name
                                     :activation-fn activation-fn
                                     :priority lsp-docker-default-priority
                                     :server-command server-launch-command
                                     :launch-server-cmd-fn #'lsp-docker-launch-new-container)
                                  (lsp-docker--build-image-and-register-server-async
-                                  :image-name server-container/image-name
+                                  :image-name server-image-name
                                   :dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp)
                                   :server-id regular-server-id
                                   :docker-server-id server-id
