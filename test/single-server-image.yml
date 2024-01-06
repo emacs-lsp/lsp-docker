@@ -3,8 +3,8 @@ lsp:
   server:
     type: docker
     subtype: image
-    name: "lsp-image:test"
-    server: "pylsp"
+    name: lsp-image:test
+    server: pylsp
     launch_command: "pylsp"
   mappings:
     - source: "."
