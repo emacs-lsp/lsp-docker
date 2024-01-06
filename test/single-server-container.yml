@@ -1,10 +1,10 @@
+# support to test single container-based server
 lsp:
   server:
     type: docker
     subtype: container
     name: "test-pylspService-1"
-    server: "pylsp"
-    # if the same nothing bad happens
+    server: pylsp
   mappings:
     - source: "."
       destination: "/code"
