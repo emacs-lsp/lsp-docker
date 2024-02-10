@@ -147,7 +147,7 @@
 It is structured in the following way:
 
 #+begin_src yaml
-  # signle server configuration
+  # single server configuration
   lsp:
     server:
       type: docker
@@ -182,7 +182,7 @@ It is structured in the following way:
         subtype: ...
         ...                       # keys as in the classic single server case, e.g. type, subtype, etc...
       - ...                       # other single server configuration(s)
-    mappings:                     # shared among each server
+    mappings:                     # shared among all servers
       - source: <path-on-host>
         destination: <path-on-lang-server>
       ...                         # other mappings
