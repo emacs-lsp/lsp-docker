@@ -397,7 +397,7 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
      (let ((current-project-root (lsp-workspace-root))
            (registered-project-root ,project-dir)
            (base-activation-fn ,(lsp--client-activation-fn base-lsp-client))
-           (base-major-modes ,(lsp--client-major-modes base-lsp-client)))
+           (base-major-modes ',(lsp--client-major-modes base-lsp-client)))
        (and (f-same? current-project-root registered-project-root)
             (or (if (functionp base-activation-fn)
                     (funcall base-activation-fn current-file-name current-major-mode)
