@@ -1,0 +1,11 @@
+# support to test single image-based server
+lsp:
+  server:
+    type: docker
+    subtype: image
+    name: lsp-image:test
+    server: pylsp
+    launch_command: "pylsp"
+  mappings:
+    - source: "."
+      destination: "/code"

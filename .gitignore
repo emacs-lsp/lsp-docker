@@ -27,3 +27,6 @@ emacs.d
 Debug
 .log
 *.ccls-cache*
+
+# test files
+test/.lsp-docker.yml

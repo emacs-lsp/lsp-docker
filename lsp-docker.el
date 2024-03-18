@@ -49,6 +49,38 @@
   :group 'lsp-docker
   :type 'string)
 
+;; top node keys
+(defconst lsp-docker--lsp-key 'lsp
+  "Main key associated to the root-node of the containerized language servers")
+
+;; 1st sub-node keys
+(defconst lsp-docker--server-key 'server
+  "LSP sub-key holding a single (or a group of) server(s)")
+(defconst lsp-docker--mappings-key 'mappings
+  "Collection of mappings between host-paths and
+containerized-paths (host paths must be within the project)")
+
+;; 2nd sub-node keys
+;; supported keys in YAML configuration file(s)
+(defconst lsp-docker--srv-cfg-type-key 'type
+  "The type of server (at the moment only `docker' is supported).")
+(defconst lsp-docker--srv-cfg-subtype-key 'subtype
+  "For type container it can be:
+- `container': attach to an already running container
+- `image': when the image does not exist, try to build it based on the dockerfile
+  found in the project-scope An image might feature an optional tag, i.e.
+  `<image>:<tag>'. the If a tagless image is indicated `latest' will be assumed")
+(defconst lsp-docker--srv-cfg-name-key 'name
+  "Depending on the `lsp-docker--srv-cfg-subtype-key' it holds the
+name of the container/image for the described language server.")
+(defconst lsp-docker--srv-cfg-server-key 'server
+  "Server ID of a registered LSP server. You can find the list of
+registered servers evaluating: `(ht-keys lsp-clients)'.")
+(defconst lsp-docker--srv-cfg-launch-command-key 'launch_command
+  "Command to launch the language server in stdio mode. This key is
+not used when the `lsp-docker--srv-cfg-subtype-key' is set to
+container, as the server command shall be the entrypoint.")
+
 (defun lsp-docker--log-docker-supplemental-calls-p ()
   "Return non-nil if should log docker invocation commands"
   lsp-docker-log-docker-supplemental-calls)
@@ -248,17 +280,18 @@ the docker container to run the language server."
 
 (defvar lsp-docker-default-priority
   100
-  "Default lsp-docker containerized servers priority (it needs to be bigger than default servers in order to override them)")
+  "Default lsp-docker containerized servers priority (it needs to
+be bigger than default servers in order to override them)")
 
 (defcustom lsp-docker-persistent-default-config
-  (ht ('server (ht ('type "docker")
-                  ('subtype "image")
-                  ('name "emacslsp/lsp-docker-langservers")
-                  ('server nil)
-                  ('launch_command nil)))
-      ('mappings (vector
-                  (ht ('source ".")
-                    ('destination "/projects")))))
+  (ht (lsp-docker--server-key (ht (lsp-docker--srv-cfg-type-key "docker")
+                                  (lsp-docker--srv-cfg-subtype-key "image")
+                                  (lsp-docker--srv-cfg-name-key "emacslsp/lsp-docker-langservers")
+                                  (lsp-docker--srv-cfg-server-key nil)
+                                  (lsp-docker--srv-cfg-launch-command-key nil)))
+      (lsp-docker--mappings-key (vector
+                                 (ht ('source ".")
+                                     ('destination "/projects")))))
   "Default configuration for all language servers with persistent configurations"
   :type 'hash-table
   :group 'lsp-docker)
@@ -267,8 +300,11 @@ the docker container to run the language server."
   "Get the LSP configuration based on a project configuration file"
   (if (f-exists? project-config-file-path)
       (if-let* ((whole-config (yaml-parse-string (f-read project-config-file-path)))
-               (lsp-config (gethash 'lsp whole-config)))
-          (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config))))
+                (lsp-config (gethash lsp-docker--lsp-key whole-config)))
+          ;; use default values for missing fields in the provided configuration
+          (if (vectorp (gethash lsp-docker--server-key lsp-config))
+            lsp-config        ; DO NOT merge to the persistent configuration when a multi-server one is detected
+            (ht-merge (ht-copy lsp-docker-persistent-default-config) lsp-config)))))
 
 (defun lsp-docker--find-project-config-file-from-lsp ()
   "Get the LSP configuration file path (project-local configuration, using lsp-mode)"
@@ -300,18 +336,19 @@ the docker container to run the language server."
 (defun lsp-docker-get-config-from-lsp ()
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
   (let ((project-config-file-path (lsp-docker--find-project-config-file-from-lsp)))
-    (or (lsp-docker-get-config-from-project-config-file project-config-file-path)
-        (ht-copy lsp-docker-persistent-default-config))))
+    (if project-config-file-path
+        (or (lsp-docker-get-config-from-project-config-file project-config-file-path)
+            (ht-copy lsp-docker-persistent-default-config))
+      (user-error "cannot find LSP configuration file project, refer to the documentation"))))
 
 (defvar lsp-docker-supported-server-types-subtypes
   (ht ('docker (list 'container 'image)))
   "A list of all supported server types and subtypes, currently only docker is supported")
 
-(defun lsp-docker-get-server-type-subtype (config)
-  "Get the server type"
-  (let* ((lsp-server-info (gethash 'server config))
-         (lsp-server-type (gethash 'type lsp-server-info))
-         (lsp-server-subtype (gethash 'subtype lsp-server-info)))
+(defun lsp-docker-get-server-type-subtype (server-config)
+  "Get the server type & sub-type from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-type (gethash lsp-docker--srv-cfg-type-key server-config))
+         (lsp-server-subtype (gethash lsp-docker--srv-cfg-subtype-key server-config)))
     (cons (if (stringp lsp-server-type)
               (intern lsp-server-type)
             lsp-server-type)
@@ -319,44 +356,47 @@ the docker container to run the language server."
               (intern lsp-server-subtype)
             lsp-server-subtype))))
 
-(defun lsp-docker-get-server-container-name (config)
-  "Get the server container name"
-  (let* ((lsp-server-info (gethash 'server config))
-         (lsp-server-subtype (gethash 'subtype lsp-server-info)))
+(defun lsp-docker-get-server-container-name (server-config)
+  "Get the server container name from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-subtype (gethash 'subtype server-config)))
     (if (equal lsp-server-subtype "container")
-        (gethash 'name lsp-server-info))))
+        (gethash 'name server-config))))
 
-(defun lsp-docker-get-server-image-name (config)
-  "Get the server image name"
-  (let* ((lsp-server-info (gethash 'server config))
-         (lsp-server-subtype (gethash 'subtype lsp-server-info)))
+(defun lsp-docker-get-server-image-name (server-config)
+  "Get the server image name from the SERVER-CONFIG hash-table"
+  (let* ((lsp-server-subtype (gethash 'subtype server-config)))
     (if (equal lsp-server-subtype "image")
-        (gethash 'name lsp-server-info))))
+        (gethash 'name server-config))))
 
-(defun lsp-docker-get-server-id (config)
-  "Get the server id"
-  (let ((lsp-server-info (gethash 'server config)))
-    (if (stringp (gethash 'server lsp-server-info))
-        (intern (gethash 'server lsp-server-info))
-      (gethash 'server lsp-server-info))))
 
-(defun lsp-docker--get-base-client (config)
-  "Get the base lsp client for dockerized client to be built upon"
-  (if-let* ((base-server-id (lsp-docker-get-server-id config))
-            (base-client (gethash base-server-id lsp-clients)))
+(defun lsp-docker-get-server-id (server-config)
+  "Get the server id from the SERVER-CONFIG hash-table"
+  (let ((server-id (gethash lsp-docker--srv-cfg-server-key server-config)))
+    (if (stringp server-id)
+        (intern server-id)
+      server-id)))
+
+(defun lsp-docker--get-base-client (base-server-id)
+  "Get the base lsp client associated to BASE-SERVER-ID key for
+dockerized client to be built upon"
+  (if-let* ((base-client (gethash base-server-id lsp-clients)))
       base-client
-    (user-error "Cannot find a specified base lsp client! Please check the 'server' parameter in the config")))
+    (user-error "Cannot find the specified base lsp client (%s)!
+Make sure the '%s' sub-key is set to one of the lsp registered clients:\n\n%s"
+                base-server-id lsp-docker--srv-cfg-server-key (ht-keys lsp-clients))))
 
 (defun lsp-docker-get-path-mappings (config project-directory)
-  "Get the server path mappings"
-  (if-let ((lsp-mappings-info (gethash 'mappings config)))
-      (--map (cons (f-canonical (f-expand (gethash 'source it) project-directory)) (gethash 'destination it)) lsp-mappings-info)
+  "Get the server path mappings from the top project hash-table CONFIG"
+  (if-let ((lsp-mappings-info (gethash lsp-docker--mappings-key config)))
+      (--map (cons (f-canonical (f-expand (gethash 'source it)
+                                          project-directory))
+                   (gethash 'destination it))
+             lsp-mappings-info)
     (user-error "No path mappings specified!")))
 
-(defun lsp-docker-get-launch-command (config)
-  "Get the server launch command"
-  (let ((lsp-server-info (gethash 'server config)))
-    (gethash 'launch_command lsp-server-info)))
+(defun lsp-docker-get-launch-command (server-config)
+  "Get the server launch command from the SERVER-CONFIG hash-table"
+  (gethash lsp-docker--srv-cfg-launch-command-key server-config))
 
 (defun lsp-docker-check-server-type-subtype (supported-server-types-subtypes server-type-subtype)
   "Verify that the combination of server (type . subtype) is supported by the current implementation"
@@ -365,8 +405,8 @@ the docker container to run the language server."
   (if (ht-find (lambda (type subtypes)
                  (let ((server-type (car server-type-subtype))
                        (server-subtype (cdr server-type-subtype)))
-                   (if (and (equal server-type type) (-contains? subtypes server-subtype))
-                       t)))
+                   (and (equal server-type type)
+                        (-contains? subtypes server-subtype))))
                supported-server-types-subtypes)
       server-type-subtype
     (user-error "No compatible server type and subtype found!")))
@@ -404,23 +444,28 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
                   nil)
                 (-contains? base-major-modes current-major-mode))))))
 
-(defun lsp-docker-generate-docker-server-id (config project-root)
-  "Generate the docker-server-id from the project config"
-  (let ((original-server-id (symbol-name (lsp-docker-get-server-id config)))
+(defun lsp-docker-generate-docker-server-id (server-config project-root)
+  "Generate the docker-server-id from the SERVER-CONFIG"
+  (let ((original-server-id (symbol-name (lsp-docker-get-server-id server-config)))
          (project-path-server-id-part (s-chop-prefix "-" (s-replace-all '(("/" . "-") ("." . "")) project-root))))
     (intern (s-join "-" (list project-path-server-id-part original-server-id "docker")))))
 
-(defun lsp-docker--generate-docker-server-container-name (config project-root)
-  "Generate the docker-container-name from the project config"
-  (let ((docker-server-id (lsp-docker-generate-docker-server-id config project-root)))
+(defun lsp-docker--generate-docker-server-container-name (server-config project-root)
+  "Generate the docker-container-name from the SERVER-CONFIG"
+  (let ((docker-server-id (lsp-docker-generate-docker-server-id server-config project-root)))
     (if (symbolp docker-server-id)
         (symbol-name docker-server-id)
       docker-server-id)))
 
-(defun lsp-docker--finalize-docker-server-container-name (config-specified-server-name config project-root)
-  "Get or generate a unique (if generated) or leave config-specified server name"
+(defun lsp-docker--finalize-docker-server-container-name (config-specified-server-name server-config project-root)
+  "Get or generate the container name.
+
+If CONFIG-SPECIFIED-SERVER-NAME is non-nil, return it as
+container name. Otherwise generate a unique container name from
+SERVER-CONFIG and PROJECT-ROOT.
+"
   (cond ((stringp config-specified-server-name) config-specified-server-name)
-         ('t (lsp-docker--attach-container-name-global-suffix (lsp-docker--generate-docker-server-container-name config project-root)))))
+         ('t (lsp-docker--attach-container-name-global-suffix (lsp-docker--generate-docker-server-container-name server-config project-root)))))
 
 (defun lsp-docker--encode-single-quoted-parameters (raw-token-command)
   "Encode single quoted tokens (with base64 encoding) so they won't be split"
@@ -439,7 +484,9 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
   (--map-when (s-match "'\\([^']+\\)'" it) (format "'%s'" (base64-decode-string (cadr (s-match "'\\([^']+\\)'" it)))) command-tokens))
 
 (defun lsp-docker--run-docker-command (command-arguments)
-  "Run a command (with a configurable command itself: docker or podman) and get its exit code and output as a pair (exit-code . output)"
+  "Run a command (with a configurable command itself: docker or
+podman) and get its exit code and output as a pair (exit-code .
+output)"
   (lsp-docker--run-external-command (format "%s %s" lsp-docker-command command-arguments)))
 
 (defun lsp-docker--get-build-command (image-name dockerfile-path)
@@ -548,16 +595,20 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
 
 (cl-defun lsp-docker--build-image-and-register-server-async (&key image-name
                                                                   dockerfile-path
-                                                                  project-root
                                                                   server-id
                                                                   docker-server-id
                                                                   path-mappings
-                                                                  docker-image-id
                                                                   docker-container-name
                                                                   activation-fn
-                                                                  priority
                                                                   server-command
-                                                                  launch-server-cmd-fn)
+                                                                  ;; TODO: keep these inputs for future feature
+                                                                  ;; implementation, see
+                                                                  ;; https://github.com/sfavazza/lsp-docker/pull/1#discussion_r1367081991
+                                                                  ;; project-root
+                                                                  ;; docker-image-id
+                                                                  ;; priority
+                                                                  ;; launch-server-cmd-fn
+                                                                  )
   "Build an image asynchronously and register it afterwards"
   (unless (lsp-docker--check-image-exists image-name) ;; Check again whether we have to build a new image
     (if dockerfile-path
@@ -616,70 +667,104 @@ Argument DOCKER-CONTAINER-NAME name to use for container."
         (message "Registered a language server with id: %s and container name: %s" docker-server-id docker-container-name))
   (user-error "No such client %s" server-id)))
 
-(defun lsp-docker-register ()
-  "Register a server to use LSP mode in a container for the current project"
-  (interactive)
-  (if (lsp-workspace-root)
-      (let* (
-             (config (lsp-docker-get-config-from-lsp))
-             (dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp))
-             (project-root (lsp-workspace-root))
-             (server-type-subtype (lsp-docker-get-server-type-subtype config))
-             (config-specified-server-container-name (lsp-docker-get-server-container-name config))
-             (server-image-name (lsp-docker-get-server-image-name config))
-             (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
-             (regular-server-id (lsp-docker-get-server-id config))
-             (server-id (lsp-docker-generate-docker-server-id config (lsp-workspace-root)))
-             (server-launch-command (lsp-docker-get-launch-command config))
-             (base-client (lsp-docker--get-base-client config))
-             (server-container-name (lsp-docker--finalize-docker-server-container-name config-specified-server-container-name config project-root)))
-        (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes
-                                                       server-type-subtype)
-                 (lsp-docker-check-path-mappings path-mappings))
-            (let ((container-type (car server-type-subtype))
-                  (container-subtype (cdr server-type-subtype)))
-              (pcase container-type
-                ('docker (pcase container-subtype
-                           ('image (if (lsp-docker--check-image-exists server-image-name)
+(defun lsp-docker--register-single-server (server-config project-root path-mappings)
+  "Register a single dockerized language server.
+
+Its description is provided via the SERVER-CONFIG hash-table. It
+must represents the fields defined under the `server' (single
+server configuration) or `multi-server/<dockerized-server-name>'
+(multi-server configuration) node. The PROJECT-ROOT must be a
+path pointing to the top-level folder of the project the
+configuration file resides into. The PATH-MAPPINGS provides a
+hash-table to translate the paths between the host and the
+dockerized server."
+  (let* ((server-type-subtype (lsp-docker-get-server-type-subtype server-config))
+         (config-specified-server-container-name (lsp-docker-get-server-container-name server-config))
+         (server-image-name (lsp-docker-get-server-image-name server-config))
+         (regular-server-id (lsp-docker-get-server-id server-config))
+         (server-id (lsp-docker-generate-docker-server-id server-config (lsp-workspace-root)))
+         (server-launch-command (lsp-docker-get-launch-command server-config))
+         (base-client (lsp-docker--get-base-client regular-server-id))
+         (activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client
+                         (lsp-workspace-root)
+                         base-client))
+         (server-container-name (lsp-docker--finalize-docker-server-container-name
+                                 config-specified-server-container-name server-config project-root)))
+
+    (if (and (lsp-docker-check-server-type-subtype lsp-docker-supported-server-types-subtypes
+                                                   server-type-subtype)
+             (lsp-docker-check-path-mappings path-mappings))
+        (let ((container-type (car server-type-subtype))
+              (container-subtype (cdr server-type-subtype)))
+          (pcase container-type
+            ('docker (pcase container-subtype
+                       ('image (if (lsp-docker--check-image-exists server-image-name)
+                                   (lsp-docker-register-client-with-activation-fn
+                                    :server-id regular-server-id
+                                    :docker-server-id server-id
+                                    :path-mappings path-mappings
+                                    :docker-image-id server-image-name
+                                    :docker-container-name server-container-name
+                                    :activation-fn activation-fn
+                                    :priority lsp-docker-default-priority
+                                    :server-command server-launch-command
+                                    :launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                 (lsp-docker--build-image-and-register-server-async
+                                  :image-name server-image-name
+                                  :dockerfile-path (lsp-docker--find-project-dockerfile-from-lsp)
+                                  :server-id regular-server-id
+                                  :docker-server-id server-id
+                                  :path-mappings path-mappings
+                                  :docker-container-name server-container-name
+                                  :activation-fn activation-fn
+                                  :server-command server-launch-command)))
+                       ('container (if (lsp-docker--check-container-exists server-container-name)
                                        (lsp-docker-register-client-with-activation-fn
                                         :server-id regular-server-id
                                         :docker-server-id server-id
                                         :path-mappings path-mappings
-                                        :docker-image-id server-image-name
+                                        :docker-image-id nil
                                         :docker-container-name server-container-name
-                                        :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
+                                        :activation-fn activation-fn
                                         :priority lsp-docker-default-priority
                                         :server-command server-launch-command
-                                        :launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                     (lsp-docker--build-image-and-register-server-async
-                                      :image-name server-image-name
-                                      :dockerfile-path dockerfile-path
-                                      :project-root project-root
-                                      :server-id regular-server-id
-                                      :docker-server-id server-id
-                                      :path-mappings path-mappings
-                                      :docker-image-id server-image-name
-                                      :docker-container-name server-container-name
-                                      :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
-                                      :priority lsp-docker-default-priority
-                                      :server-command server-launch-command
-                                      :launch-server-cmd-fn #'lsp-docker-launch-new-container)))
-                           ('container (if (lsp-docker--check-container-exists server-container-name)
-                                           (lsp-docker-register-client-with-activation-fn
-                                            :server-id regular-server-id
-                                            :docker-server-id server-id
-                                            :path-mappings path-mappings
-                                            :docker-image-id nil
-                                            :docker-container-name server-container-name
-                                            :activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client (lsp-workspace-root) base-client)
-                                            :priority lsp-docker-default-priority
-                                            :server-command server-launch-command
-                                            :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
-                                         (user-error "Invalid LSP docker config: cannot find the specified container: %s" server-container-name)))
-                           (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
-                (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
-          (user-error "Language server registration failed, check input parameters")))
-    (user-error (format "Current file: %s is not in a registered project!" (buffer-file-name)))))
+                                        :launch-server-cmd-fn #'lsp-docker-launch-existing-container)
+                                     (user-error "Invalid LSP docker config: cannot find the specified container: %s" server-container-name)))
+                       (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
+            (user-error "Invalid LSP docker config: unsupported server type and/or subtype")))
+      (user-error "Language server registration failed, check input parameters"))))
+
+(defun lsp-docker-register ()
+  "Register one or more dockerized language servers for the current project"
+  (interactive)
+  (if (lsp-workspace-root)
+      (let* ((config (lsp-docker-get-config-from-lsp))
+             (project-root (lsp-workspace-root))
+             (path-mappings (lsp-docker-get-path-mappings config (lsp-workspace-root)))
+             (server-config (gethash lsp-docker--server-key config)))
+
+        ;; check whether a single or multiple servers are described in the configuration
+        (cond
+         ((vectorp server-config)
+          (message "registering multiple servers")
+          ;; NOTE: if multiple language server descriptions share the same name "server" field, the latest entry
+          ;; will be enforced.
+          (--map (lsp-docker--register-single-server it
+                                                     project-root
+                                                     path-mappings)
+                 server-config))
+         (server-config
+          (message "registering a single server")
+          (lsp-docker--register-single-server server-config
+                                              project-root
+                                              path-mappings))
+         (t
+          (user-error "no `%s' node found in configuration, see README for reference"
+                      lsp-docker--server-key))))
+   (user-error
+     (format (concat "Current file: %s is not in a registered project! "
+                     "Try adding your project with `lsp-workspace-folders-add'")
+      (buffer-file-name)))))
 
 (defun lsp-docker-start ()
   "Register and launch a server to use LSP mode in a container for the current project"
