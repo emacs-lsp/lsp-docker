@@ -56,6 +56,7 @@
 ;; 1st sub-node keys
 (defconst lsp-docker--server-key 'server
   "LSP sub-key holding a single (or a group of) server(s)")
+
 (defconst lsp-docker--mappings-key 'mappings
   "Collection of mappings between host-paths and
 containerized-paths (host paths must be within the project)")
@@ -64,18 +65,22 @@ containerized-paths (host paths must be within the project)")
 ;; supported keys in YAML configuration file(s)
 (defconst lsp-docker--srv-cfg-type-key 'type
   "The type of server (at the moment only `docker' is supported).")
+
 (defconst lsp-docker--srv-cfg-subtype-key 'subtype
   "For type container it can be:
 - `container': attach to an already running container
 - `image': when the image does not exist, try to build it based on the dockerfile
   found in the project-scope An image might feature an optional tag, i.e.
   `<image>:<tag>'. the If a tagless image is indicated `latest' will be assumed")
+
 (defconst lsp-docker--srv-cfg-name-key 'name
   "Depending on the `lsp-docker--srv-cfg-subtype-key' it holds the
 name of the container/image for the described language server.")
+
 (defconst lsp-docker--srv-cfg-server-key 'server
   "Server ID of a registered LSP server. You can find the list of
 registered servers evaluating: `(ht-keys lsp-clients)'.")
+
 (defconst lsp-docker--srv-cfg-launch-command-key 'launch_command
   "Command to launch the language server in stdio mode. This key is
 not used when the `lsp-docker--srv-cfg-subtype-key' is set to
@@ -107,7 +112,6 @@ Argument PATH the path to translate."
                                       path-mappings))
        (replace-regexp-in-string (format "\\(%s\\).*" local) remote path nil nil 1)
      (user-error "The path %s is not under path mappings" path))))
-
 
 (defvar lsp-docker-container-name-suffix 0
   "Used to prevent collision of container names.")
@@ -337,9 +341,8 @@ be bigger than default servers in order to override them)")
   "Get the LSP configuration based on a project-local configuration (using lsp-mode)"
   (let ((project-config-file-path (lsp-docker--find-project-config-file-from-lsp)))
     (if project-config-file-path
-        (or (lsp-docker-get-config-from-project-config-file project-config-file-path)
-            (ht-copy lsp-docker-persistent-default-config))
-      (user-error "cannot find LSP configuration file project, refer to the documentation"))))
+        (lsp-docker-get-config-from-project-config-file project-config-file-path)
+      (ht-copy lsp-docker-persistent-default-config))))
 
 (defvar lsp-docker-supported-server-types-subtypes
   (ht ('docker (list 'container 'image)))
