@@ -377,7 +377,11 @@ be bigger than default servers in order to override them)")
 
 (defun lsp-docker--get-server-launch-parameters (server-config)
   "Get the server launch parameters from the SERVER-CONFIG hash-table"
-  (gethash lsp-docker--srv-cfg-launch-parameters-key server-config))
+  (let ((launch-parameters (gethash lsp-docker--srv-cfg-launch-parameters-key server-config)))
+    (if (or (vectorp launch-parameters)
+            (not launch-parameters))
+        launch-parameters
+      (user-error "Cannot find the right launch parameters"))))
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
