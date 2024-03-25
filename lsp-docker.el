@@ -164,6 +164,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
                                            path-mappings
+                                           launch-parameters
                                            docker-image-id
                                            docker-container-name
                                            priority
@@ -184,6 +185,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
                                                         (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
                                                                  docker-container-name-full
                                                                  path-mappings
+                                                                 launch-parameters
                                                                  docker-image-id
                                                                  server-command)))
                                                      :test? (lambda (&rest _)
@@ -286,6 +288,7 @@ the docker container to run the language server."
                                   default-docker-container-name)
          :server-command server-command
          :path-mappings path-mappings
+         :launch-parameters nil
          :launch-server-cmd-fn #'lsp-docker-launch-new-container))
       client-configs)))
 
@@ -593,6 +596,7 @@ output)"
                                                      server-id
                                                      docker-server-id
                                                      path-mappings
+                                                     launch-parameters
                                                      image-name
                                                      docker-container-name
                                                      activation-fn
@@ -603,6 +607,7 @@ output)"
         :server-id ',server-id
         :docker-server-id ',docker-server-id
         :path-mappings ',path-mappings
+        :launch-parameters ,launch-parameters
         :docker-image-id ',image-name
         :docker-container-name ',docker-container-name
         :activation-fn ,activation-fn
@@ -615,6 +620,7 @@ output)"
                                                                   server-id
                                                                   docker-server-id
                                                                   path-mappings
+                                                                  launch-parameters
                                                                   docker-container-name
                                                                   activation-fn
                                                                   server-command
@@ -644,6 +650,7 @@ output)"
                             server-id
                             docker-server-id
                             path-mappings
+                            launch-parameters
                             image-name
                             docker-container-name
                             activation-fn
@@ -654,6 +661,7 @@ output)"
 (cl-defun lsp-docker-register-client-with-activation-fn (&key server-id
                                                               docker-server-id
                                                               path-mappings
+                                                              launch-parameters
                                                               docker-image-id
                                                               docker-container-name
                                                               activation-fn
@@ -675,6 +683,7 @@ output)"
                                                       (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
                                                                docker-container-name
                                                                path-mappings
+                                                               launch-parameters
                                                                docker-image-id
                                                                server-command)))
                                                    :test? (lambda (&rest _)
@@ -700,6 +709,7 @@ dockerized server."
          (server-image-name (lsp-docker-get-server-image-name server-config))
          (regular-server-id (lsp-docker-get-server-id server-config))
          (server-id (lsp-docker-generate-docker-server-id server-config (lsp-workspace-root)))
+         (server-launch-parameters (lsp-docker--get-server-launch-parameters server-config))
          (server-launch-command (lsp-docker-get-launch-command server-config))
          (base-client (lsp-docker--get-base-client regular-server-id))
          (activation-fn (lsp-docker--create-activation-function-by-project-dir-and-base-client
@@ -720,6 +730,7 @@ dockerized server."
                                     :server-id regular-server-id
                                     :docker-server-id server-id
                                     :path-mappings path-mappings
+                                    :launch-parameters server-launch-parameters
                                     :docker-image-id server-image-name
                                     :docker-container-name server-container-name
                                     :activation-fn activation-fn
@@ -732,6 +743,7 @@ dockerized server."
                                   :server-id regular-server-id
                                   :docker-server-id server-id
                                   :path-mappings path-mappings
+                                  :launch-parameters server-launch-parameters
                                   :docker-container-name server-container-name
                                   :activation-fn activation-fn
                                   :server-command server-launch-command)))
@@ -740,6 +752,7 @@ dockerized server."
                                         :server-id regular-server-id
                                         :docker-server-id server-id
                                         :path-mappings path-mappings
+                                        :launch-parameters nil
                                         :docker-image-id nil
                                         :docker-container-name server-container-name
                                         :activation-fn activation-fn
