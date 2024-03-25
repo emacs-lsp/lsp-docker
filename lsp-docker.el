@@ -123,23 +123,26 @@ Argument PATH the path to translate."
 (defvar lsp-docker-command "docker"
   "The docker command to use.")
 
-(defun lsp-docker-launch-new-container (docker-container-name path-mappings docker-image-id server-command)
+(defun lsp-docker-launch-new-container (docker-container-name path-mappings launch-parameters docker-image-id server-command)
   "Return the docker command to be executed on host.
 Argument DOCKER-CONTAINER-NAME name to use for container.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
 Argument DOCKER-IMAGE-ID the docker container to run language servers with.
+Argument LAUNCH-PARAMETERS parameters (for docker or podman) to run language servers with.
 Argument SERVER-COMMAND the language server command to run inside the container."
-  (split-string
-   (--doto (format "%s run --name %s --rm -i %s %s %s"
-                   lsp-docker-command
-                   docker-container-name
-                   (->> path-mappings
-                        (-map (-lambda ((path . docker-path))
-                                (format "-v %s:%s" path docker-path)))
-                        (s-join " "))
-                   docker-image-id
-                   server-command))
-   " "))
+  (-remove #'s-blank?
+           (split-string
+            (format "%s run --name %s --rm -i %s %s %s %s"
+                    lsp-docker-command
+                    docker-container-name
+                    (->> path-mappings
+                         (-map (-lambda ((path . docker-path))
+                                 (format "-v %s:%s" path docker-path)))
+                         (s-join " "))
+                    (s-join " " launch-parameters)
+                    docker-image-id
+                    server-command)
+            " ")))
 
 (defun lsp-docker-exec-in-container (docker-container-name server-command)
   "Return command to exec into running container.
