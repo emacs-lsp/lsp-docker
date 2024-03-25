@@ -81,6 +81,10 @@ name of the container/image for the described language server.")
   "Server ID of a registered LSP server. You can find the list of
 registered servers evaluating: `(ht-keys lsp-clients)'.")
 
+(defconst lsp-docker--srv-cfg-launch-parameters-key 'launch_parameters
+  "Command parameters (docker or podman) to launch the language server with.
+Pay attention that these parameters have to be supported by the selected subtype.")
+
 (defconst lsp-docker--srv-cfg-launch-command-key 'launch_command
   "Command to launch the language server in stdio mode. This key is
 not used when the `lsp-docker--srv-cfg-subtype-key' is set to
@@ -371,6 +375,9 @@ be bigger than default servers in order to override them)")
     (if (equal lsp-server-subtype "image")
         (gethash 'name server-config))))
 
+(defun lsp-docker--get-server-launch-parameters (server-config)
+  "Get the server launch parameters from the SERVER-CONFIG hash-table"
+  (gethash lsp-docker--srv-cfg-launch-parameters-key server-config))
 
 (defun lsp-docker-get-server-id (server-config)
   "Get the server id from the SERVER-CONFIG hash-table"
