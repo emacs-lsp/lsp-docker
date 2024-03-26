@@ -166,6 +166,12 @@ It is structured in the following way:
       # source:
       # https://stackoverflow.com/questions/17066169/retrieve-keys-from-hash-table-sorted-by-the-values-efficiently
       server: server-id-of-the-base-server
+      # an (optional) array of parameters (docker or podman) to launch the image with
+      # initially intended to host the '--userns' parameter
+      # NOTE: 'launch_parameters' are not used with 'container' subtype servers
+      # in this case embed all required parameters when creating the server instead
+      launch_parameters:
+        - "--userns=nomap"
       # command to launch the language server in stdio mode
       # NOTE: 'launch_command' is not used with 'container' subtype servers as a command is embedded in a
       # container itself and serves as entrypoint
