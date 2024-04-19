@@ -441,7 +441,7 @@ Make sure the '%s' sub-key is set to one of the lsp registered clients:\n\n%s"
   "Return the docker command to be executed on host.
 Argument DOCKER-CONTAINER-NAME name to use for container."
   (split-string
-   (format "%s start -i %s"
+   (format "%s start -ia %s"
            lsp-docker-command
            docker-container-name)
    " "))
