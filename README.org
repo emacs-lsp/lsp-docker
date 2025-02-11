@@ -1,7 +1,12 @@
+
 #+ATTR_HTML: align="center"; margin-right="auto"; margin-left="auto"
 =lsp-mode= uses =lsp-docker= to run language servers using in containers
 
 [[./images/logo.png]]
+
+[[https://melpa.org/#/lsp-docker][file:https://melpa.org/packages/lsp-docker-badge.svg]]
+[[https://stable.melpa.org/#/lsp-docker][file:https://stable.melpa.org/packages/lsp-docker-badge.svg]]
+[[https://github.com/emacs-lsp/lsp-docker/actions][file:https://github.com/emacs-lsp/lsp-docker/workflows/CI/badge.svg]]
 
 * Table of Contents                                       :TOC_4_gh:noexport:
   - [[#preconfigured-language-servers][Preconfigured language servers]]
