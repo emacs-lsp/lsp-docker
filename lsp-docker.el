@@ -94,7 +94,17 @@ container, as the server command shall be the entrypoint.")
   "Return non-nil if should log docker invocation commands"
   lsp-docker-log-docker-supplemental-calls)
 
-(defun lsp-docker--uri->path (path-mappings docker-container-name uri)
+(defvar root-name-map (make-hash-table :test 'equal))
+
+(defun lsp-docker--get-container-name-from-path (path)
+  (let ((key (-some (lambda (s) (if (string-prefix-p s path) s nil))
+                   (hash-table-keys root-name-map))))
+    (if key
+        (gethash key root-name-map)
+      (user-error "The path %s is not prefixed by a workspace root" path)
+      )))
+
+(defun lsp-docker--uri->path (path-mappings uri)
   "Turn docker URI into host path.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
 Argument DOCKER-CONTAINER-NAME name to use when running container.
@@ -104,7 +114,7 @@ Argument URI the uri to translate."
                                          (s-contains? docker-path path))
                                        path-mappings))
         (replace-regexp-in-string (format "\\(%s\\).*" remote) local path nil nil 1)
-      (format "/docker:%s:%s" docker-container-name path))))
+      (format "/docker:%s:%s" (lsp-docker--get-container-name-from-path path) path))))
 
 (defun lsp-docker--path->uri (path-mappings path)
   "Turn host PATH into docker uri.
@@ -127,6 +137,7 @@ Argument PATH the path to translate."
   "Return the docker command to be executed on host.
 Argument DOCKER-CONTAINER-NAME name to use for container.
 Argument PATH-MAPPINGS dotted pair of (host-path . container-path).
+
 Argument DOCKER-IMAGE-ID the docker container to run language servers with.
 Argument LAUNCH-PARAMETERS parameters (for docker or podman) to run language servers with.
 Argument SERVER-COMMAND the language server command to run inside the container."
@@ -151,6 +162,7 @@ Argument SERVER-COMMAND the command to execute inside the running container."
 (split-string
  (format "%s exec -i %s %s" lsp-docker-command docker-container-name server-command)))
 
+
 (defun lsp-docker--attach-container-name-global-suffix (container-name)
   "Attach a user-specified or a default suffix (properly changing it) to the container name"
   (if lsp-docker-container-name-suffix
@@ -160,6 +172,10 @@ Argument SERVER-COMMAND the command to execute inside the running container."
                   (cl-incf lsp-docker-container-name-suffix)
                 lsp-docker-container-name-suffix))
     container-name))
+
+
+(defun plist-mod (fun  property  list)
+  (plist-put list property (funcall fun (plist-get list property))))
 
 (cl-defun lsp-docker-register-client (&key server-id
                                            docker-server-id
@@ -173,27 +189,35 @@ Argument SERVER-COMMAND the command to execute inside the running container."
   "Registers docker clients with lsp"
   (if-let ((client (copy-lsp--client (gethash server-id lsp-clients))))
       (progn
-        (let ((docker-container-name-full (lsp-docker--attach-container-name-global-suffix docker-container-name)))
           (setf (lsp--client-server-id client) docker-server-id
-                (lsp--client-uri->path-fn client) (-partial #'lsp-docker--uri->path
+                (lsp--client-uri->path-fn client) (lambda (uri) (funcall #'lsp-docker--uri->path
                                                             path-mappings
-                                                            docker-container-name-full)
+                                                            uri))
                 (lsp--client-path->uri-fn client) (-partial #'lsp-docker--path->uri path-mappings)
-                (lsp--client-new-connection client) (plist-put
-                                                     (lsp-stdio-connection
-                                                      (lambda ()
-                                                        (funcall (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
-                                                                 docker-container-name-full
-                                                                 path-mappings
-                                                                 launch-parameters
-                                                                 docker-image-id
-                                                                 server-command)))
-                                                     :test? (lambda (&rest _)
+                (lsp--client-new-connection client) (list
+                                                      :connect (lambda (filter sentinel name environment-fn workspace)
+                                                                 (let* ((docker-container-name-full
+                                                              (lsp-docker--attach-container-name-global-suffix docker-container-name))
+                                                              (connect-fun (plist-get
+                                                                            (lsp-stdio-connection
+                                                                             (funcall
+                                                                              (or launch-server-cmd-fn #'lsp-docker-launch-new-container)
+                                                                              docker-container-name-full
+                                                                              path-mappings
+                                                                              launch-parameters
+                                                                              docker-image-id
+                                                                              server-command))
+                                                                            :connect )))
+                                                          (puthash (lsp--workspace-root workspace)
+                                                                   docker-container-name-full
+                                                                   root-name-map)
+                      1                                   (funcall connect-fun filter sentinel name environment-fn workspace)))
+                                                      :test? (lambda (&rest _)
                                                               (-any?
                                                                (-lambda ((dir))
                                                                  (f-ancestor-of? dir (buffer-file-name)))
                                                                path-mappings)))
-                (lsp--client-priority client) (or priority (lsp--client-priority client))))
+                (lsp--client-priority client) (or priority (lsp--client-priority client)))
         (lsp-register-client client))
     (user-error "No such client %s" server-id)))
 
