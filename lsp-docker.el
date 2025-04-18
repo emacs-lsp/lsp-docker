@@ -288,7 +288,7 @@ the docker container to run the language server."
                                   default-docker-container-name)
          :server-command server-command
          :path-mappings path-mappings
-         :launch-parameters nil
+         :launch-parameters '("--pid=host")
          :launch-server-cmd-fn #'lsp-docker-launch-new-container))
       client-configs)))
 
