@@ -1,3 +1,5 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
 (package "lsp-docker"
          "1.0.0"
          "LSP Docker integration")
